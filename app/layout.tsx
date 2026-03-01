@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@radix-ui/themes/styles.css";
+import { Theme } from "@radix-ui/themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,15 +29,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <header className="bg-blue-500 p-4 text-white">Exam Scheduler</header>
-        <div className="min-h-screen grid grid-cols-1 md:grid-cols-5 gap-3">
-          <div className="hidden md:block md:col-span-1 bg-gray-200 p-4"> </div>
-          <div className="col-span-3 bg-gray-400 p-4"> {children}</div>
-          <div className="hidden md:block md:col-span-1 bg-gray-600 p-4"> </div>
-        </div>
-        <footer className="bg-blue-500 p-4 text-white">
-          © 2024 Exam Scheduler
-        </footer>
+        <Theme accentColor="blue" grayColor="gray">
+          {children}
+          <footer className="bg-blue-500 p-4 text-white">
+            © 2026 Exam Scheduler
+          </footer>
+        </Theme>
       </body>
     </html>
   );
