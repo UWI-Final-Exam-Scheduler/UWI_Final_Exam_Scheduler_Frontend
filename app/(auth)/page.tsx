@@ -69,9 +69,9 @@ export default function Login() {
         >
           <CustomTextField
             placeholder="Username"
-            width={300}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            className="w-full sm:w-[200px] md:w-[300px]"
           />
 
           {fieldErrors.username && (
@@ -82,10 +82,10 @@ export default function Login() {
 
           <CustomTextField
             placeholder="Password"
-            width={300}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="w-full sm:w-[200px] md:w-[300px]"
           />
 
           {fieldErrors.password && (

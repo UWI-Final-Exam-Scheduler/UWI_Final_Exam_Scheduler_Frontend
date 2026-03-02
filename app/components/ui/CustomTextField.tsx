@@ -7,34 +7,31 @@ type CustomTextFieldProps = {
   icon?: ReactNode;
   placeholder: string;
   size?: "1" | "2" | "3";
-  fullWidth?: boolean;
-  width?: number;
   value?: string;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   type?: RadixTextFieldType;
+  className?: string; // can add custom width and responsive features with tailwind css
 };
 
 export default function CustomTextField({
   icon,
   placeholder,
   size = "2",
-  fullWidth = false,
-  width,
   value,
   onChange,
   type = "text",
+  className,
 }: CustomTextFieldProps) {
   return (
     <TextField.Root
       placeholder={placeholder}
       size={size}
-      className={fullWidth ? "w-full" : ""}
-      style={width ? { width } : undefined}
       variant="classic"
       radius="large"
       value={value}
       onChange={onChange}
       type={type}
+      className={`w-full ${className || ""}`}
     >
       {icon && (
         <TextField.Slot>
