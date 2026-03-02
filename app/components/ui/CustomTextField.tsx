@@ -1,5 +1,7 @@
 import { TextField } from "@radix-ui/themes";
-import type { ReactNode } from "react";
+import type { ReactNode, ChangeEvent, ComponentProps } from "react";
+
+type RadixTextFieldType = ComponentProps<typeof TextField.Root>["type"];
 
 type CustomTextFieldProps = {
   icon?: ReactNode;
@@ -7,6 +9,9 @@ type CustomTextFieldProps = {
   size?: "1" | "2" | "3";
   fullWidth?: boolean;
   width?: number;
+  value?: string;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  type?: RadixTextFieldType;
 };
 
 export default function CustomTextField({
@@ -15,6 +20,9 @@ export default function CustomTextField({
   size = "2",
   fullWidth = false,
   width,
+  value,
+  onChange,
+  type = "text",
 }: CustomTextFieldProps) {
   return (
     <TextField.Root
@@ -24,6 +32,9 @@ export default function CustomTextField({
       style={width ? { width } : undefined}
       variant="classic"
       radius="large"
+      value={value}
+      onChange={onChange}
+      type={type}
     >
       {icon && (
         <TextField.Slot>

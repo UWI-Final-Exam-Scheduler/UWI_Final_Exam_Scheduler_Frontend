@@ -17,7 +17,7 @@ export default function LoginCard({ children }: LoginCardProps) {
         <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
       </div>
       <h2 className="text-lg font-bold mb-4 text-center">Login</h2>
-      <div className="flex flex-col items-center gap-6">{children}</div>
+      <div className="flex flex-col items-center gap-4">{children}</div>
     </Card>
   );
 }
