@@ -20,7 +20,6 @@ export default function Sidebar() {
     >
       <aside className="flex flex-col">
         <Flex direction="column" gap="2" p="2">
-          {/* Toggle – hamburger when closed, chevron when open */}
           <Button
             variant="ghost"
             color="gray"

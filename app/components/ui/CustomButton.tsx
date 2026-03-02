@@ -2,22 +2,23 @@ import { Button } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 
 type CustomButtonProps = {
-  children: ReactNode;
+  buttonname: string;
+  size?: "1" | "2" | "3";
 };
 
-export default function CustomButton({ children }: CustomButtonProps) {
+export default function CustomButton({ buttonname, size }: CustomButtonProps) {
   return (
     <Button
       variant="solid"
       color="blue"
       radius="large"
-      size="2"
+      size={size || "2"}
       style={{
         justifyContent: "flex-start",
         padding: "var(--space-2)",
       }}
     >
-      {children}
+      {buttonname}
     </Button>
   );
 }

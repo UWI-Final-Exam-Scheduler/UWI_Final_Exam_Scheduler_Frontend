@@ -8,7 +8,7 @@ type CardProps = {
 
 export default function CustomCard({ children, className }: CardProps) {
   return (
-    <div className="rounded-lg p-3">
+    <div className="rounded-lg p-3 shadow-md/10">
       <Card
         className={`${className}`}
         variant="surface"
