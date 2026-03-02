@@ -1,15 +1,15 @@
 import CustomButton from "../components/ui/CustomButton";
-import CustomCard from "../components/ui/CustomCard";
+import CustomTextField from "../components/ui/CustomTextField";
 import LoginCard from "../components/ui/LoginCard";
 
 export default function Login() {
   return (
     <div className="flex justify-center">
       <LoginCard>
-        <CustomCard>Username</CustomCard>
-        <CustomCard>Password</CustomCard>
+        <CustomTextField placeholder="Email" width={300} />
+        <CustomTextField placeholder="Password" width={300} />
         <div className="flex justify-center">
-          <CustomButton>Login</CustomButton>
+          <CustomButton buttonname="Login" />
         </div>
       </LoginCard>
     </div>

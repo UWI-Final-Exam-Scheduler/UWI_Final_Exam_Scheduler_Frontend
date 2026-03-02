@@ -11,10 +11,13 @@ export default function LoginCard({ children }: LoginCardProps) {
       variant="surface"
       size="2"
       style={{ width: "65%", height: "500px" }}
-      className="bg-white rounded-lg p-3"
+      className="bg-white rounded-lg p-3 shadow-xl/30"
     >
+      <div className="flex justify-center mb-4">
+        <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
+      </div>
       <h2 className="text-lg font-bold mb-4 text-center">Login</h2>
-      <div className="flex flex-col gap-4">{children}</div>
+      <div className="flex flex-col items-center gap-6">{children}</div>
     </Card>
   );
 }
