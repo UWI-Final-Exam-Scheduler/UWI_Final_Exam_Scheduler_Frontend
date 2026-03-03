@@ -37,8 +37,12 @@ export default function Login() {
     }
 
     try {
+      const baseUrl = (
+        process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL || ""
+      ).replace(/\/$/, "");
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL}api/auth/login`, //using local for development, change to production URL when deploying
+        `${baseUrl}/api/auth/login`, //using local for development, change to production URL when deploying
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
