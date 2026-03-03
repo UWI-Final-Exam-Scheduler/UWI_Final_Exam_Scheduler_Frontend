@@ -74,6 +74,7 @@ export default function Login() {
           <CustomTextField
             placeholder="Username"
             value={username}
+            size="3"
             onChange={(e) => setUsername(e.target.value)}
             className="w-full sm:w-[200px] md:w-[300px]"
           />
@@ -87,6 +88,7 @@ export default function Login() {
           <CustomTextField
             placeholder="Password"
             type="password"
+            size="3"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full sm:w-[200px] md:w-[300px]"
