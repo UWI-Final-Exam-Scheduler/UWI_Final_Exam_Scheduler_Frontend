@@ -37,12 +37,12 @@ export default function Login() {
     }
 
     try {
-      const baseUrl = (
-        process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL || ""
-      ).replace(/\/$/, "");
+      // const baseUrl = (
+      //   process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL || ""
+      // ).replace(/\/$/, "");
 
       const res = await fetch(
-        `${baseUrl}/api/auth/login`, //using local for development, change to production URL when deploying
+        `/api/auth/login`, //using local for development, change to production URL when deploying
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -74,6 +74,7 @@ export default function Login() {
           <CustomTextField
             placeholder="Username"
             value={username}
+            size="3"
             onChange={(e) => setUsername(e.target.value)}
             className="w-full sm:w-[200px] md:w-[300px]"
           />
@@ -87,6 +88,7 @@ export default function Login() {
           <CustomTextField
             placeholder="Password"
             type="password"
+            size="3"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full sm:w-[200px] md:w-[300px]"
