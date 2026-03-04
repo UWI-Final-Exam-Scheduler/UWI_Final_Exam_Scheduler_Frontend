@@ -3,6 +3,7 @@
 import TimeColumn from "./TimeColumn";
 import { useState } from "react";
 import { Column, Exam } from "./calendarTypes";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 
 type ExamDisplayerProps = {
   selectedDay: Date;
@@ -24,19 +25,44 @@ const EXAMS: Exam[] = [
 export default function ExamDisplayer({ selectedDay }: ExamDisplayerProps) {
   const [exams, setExams] = useState<Exam[]>(EXAMS);
   const [columns, setColumns] = useState<Column[]>(TIMECOLUMNS);
+
+  function handleExamDrag(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const examId = active.id as string;
+    const newTimeColumnId = over.id as Exam["timeColumnId"];
+
+    setExams(() =>
+      exams.map((exam) =>
+        exam.id === examId
+          ? {
+              ...exam,
+              timeColumnId: newTimeColumnId,
+            }
+          : exam,
+      ),
+    );
+  }
+
   return (
     <div>
       <h1 className="text-center text-2xl font-bold mb-4">
         Exams on {selectedDay.toLocaleDateString()}
       </h1>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 p-4">
-        {TIMECOLUMNS.map((timecolumn) => (
-          <TimeColumn
-            key={timecolumn.id}
-            column={timecolumn}
-            exams={exams.filter((exam) => exam.timeColumnId === timecolumn.id)}
-          />
-        ))}
+        <DndContext onDragEnd={handleExamDrag}>
+          {TIMECOLUMNS.map((timecolumn) => (
+            <TimeColumn
+              key={timecolumn.id}
+              column={timecolumn}
+              exams={exams.filter(
+                (exam) => exam.timeColumnId === timecolumn.id,
+              )}
+            />
+          ))}
+        </DndContext>
       </div>
     </div>
   );
