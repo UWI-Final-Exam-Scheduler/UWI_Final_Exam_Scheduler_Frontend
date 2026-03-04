@@ -4,6 +4,7 @@ import { useState } from "react";
 import CustomButton from "../components/ui/CustomButton";
 import CustomTextField from "../components/ui/CustomTextField";
 import LoginCard from "../components/ui/LoginCard";
+import { Spinner } from "@radix-ui/themes";
 
 type FieldErrors = {
   username?: string;
@@ -15,11 +16,13 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setFieldErrors({});
+    setIsLoading(true);
 
     const errors: FieldErrors = {};
 
@@ -33,6 +36,7 @@ export default function Login() {
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
+      setIsLoading(false);
       return;
     }
 
@@ -62,6 +66,8 @@ export default function Login() {
     } catch (err) {
       console.error("Login error:", err);
       setError("Network error when attempting to login");
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
@@ -103,6 +109,7 @@ export default function Login() {
             <CustomButton buttonname="Login" type="submit" />
           </div>
 
+          {isLoading && <Spinner />}
           {error && <p className="text-red-600 text-sm">{error}</p>}
         </form>
       </LoginCard>

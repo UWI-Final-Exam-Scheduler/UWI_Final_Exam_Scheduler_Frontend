@@ -7,48 +7,29 @@ type Option = { value: string; label: string };
 type CourseItem = { courseCode: string; name: string };
 
 type SelectProps = {
-  value?: Option | null;
-  onChange?: (value: Option | null) => void;
+  data: CourseItem[];
+  onChange?: (courseCode: string | null) => void;
 };
 
-export default function CourseSelect({ value, onChange }: SelectProps) {
-  const [options, setOptions] = useState<Option[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export default function CourseSelect({ data, onChange }: SelectProps) {
+  const [selectedCourse, setSelectedCourse] = useState<Option | null>(null);
 
-  useEffect(() => {
-    async function loadOptions() {
-      try {
-        setIsLoading(true);
-        const res = await fetch("/api/courses");
-        if (!res.ok) throw new Error("Failed to load courses");
-        const data: CourseItem[] = await res.json();
-
-        const mapped = data.map((item) => ({
-          value: item.courseCode,
-          label: item.courseCode,
-        }));
-        setOptions(mapped);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadOptions();
-  }, []);
+  const options = data.map((item) => ({
+    value: item.courseCode,
+    label: item.courseCode,
+  }));
 
   const handleChange = (option: SingleValue<Option>) => {
-    onChange?.(option ?? null);
+    setSelectedCourse(option);
+    onChange?.(option ? option.value : null);
   };
 
   return (
     <Select
       options={options}
-      value={value ?? null}
-      onChange={handleChange}
-      isLoading={isLoading}
+      value={selectedCourse}
       placeholder="Select a course..."
+      onChange={handleChange}
     />
   );
 }
