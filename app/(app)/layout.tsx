@@ -11,7 +11,7 @@ export default function AppLayout({
     <div>
       <header className="p-4 flex items-center gap-4">
         <Image
-          src="/uwilogo.png"
+          src="/uwiLogo.png"
           alt="UWI Logo"
           width={48}
           height={48}
