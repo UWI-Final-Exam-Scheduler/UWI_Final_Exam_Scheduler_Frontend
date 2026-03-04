@@ -54,7 +54,7 @@ export default function Enrollments() {
                 return;
             }
             const enrollmentDetails = await res.json();
-            setDisplayedEnrollments([enrollmentDetails]);
+            setDisplayedEnrollments(enrollmentDetails);
             setError("");
         } catch (err) {
             console.error("Error handling enrollment change:", err);
@@ -70,15 +70,21 @@ export default function Enrollments() {
         );
     }
 
+    const uniqueEnrollments: Enrollment[] = Array.from(
+        new Map(
+            enrollments.map((e: Enrollment) => [e.student_id, e])
+        ).values()
+    );
+
     return (
         <div>
             <h1>Enrollments Page</h1>
             <div className="mb-4">
-                <EnrollmentSelect data={enrollments} onChange={handleEnrollmentChange} />
+                <EnrollmentSelect data={uniqueEnrollments} onChange={handleEnrollmentChange} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {displayedEnrollments.map((enrollment: Enrollment) => (
-                    <CustomCard key={enrollment.student_id}>
+                    <CustomCard key={`${enrollment.student_id}-${enrollment.courseCode}`}>
                         <h2 className="text-lg font-semibold">{enrollment.student_id}</h2>
                         <p className="text-sm text-gray-600">{enrollment.courseCode}</p>
                     </CustomCard>
