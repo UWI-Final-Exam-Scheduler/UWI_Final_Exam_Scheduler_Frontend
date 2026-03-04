@@ -19,7 +19,7 @@ export const SIDEBAR_LINKS: SideBarItem[] = [
     href: "/students",
   },
   {
-    title: "Admin & Venues",
-    href: "/admin-venues",
+    title: "Venues",
+    href: "/venues",
   },
 ];
