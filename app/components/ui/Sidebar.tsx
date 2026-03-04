@@ -13,7 +13,7 @@ export default function Sidebar() {
     <Box
       asChild
       style={{
-        width: isOpen ? 224 : 64,
+        width: isOpen ? 150 : 64,
         minHeight: "100vh",
         transition: "width 0.2s ease",
       }}

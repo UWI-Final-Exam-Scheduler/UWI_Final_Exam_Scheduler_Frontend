@@ -1,24 +1,15 @@
-import CustomCard from "@/app/components/ui/CustomCard";
-import Sidebar from "../../components/ui/Sidebar";
+'use client";';
+
+import CalendarDayPicker from "@/app/components/ui/CalendarDayPicker";
 
 export default function Dashboard() {
   return (
     <div>
       <h1>Dashboard Page</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <CustomCard>
-          <h2 className="text-lg font-semibold">Description</h2>
-        </CustomCard>
-        <CustomCard>
-          <h2 className="text-lg font-semibold">Description</h2>
-        </CustomCard>
-        <CustomCard>
-          <h2 className="text-lg font-semibold">Description</h2>
-        </CustomCard>
-        <CustomCard>
-          <h2 className="text-lg font-semibold">Description</h2>
-        </CustomCard>
-      </div>
+      <CalendarDayPicker
+        startMonth={new Date(2026, 4)}
+        endMonth={new Date(2026, 5)}
+      />
     </div>
   );
 }
