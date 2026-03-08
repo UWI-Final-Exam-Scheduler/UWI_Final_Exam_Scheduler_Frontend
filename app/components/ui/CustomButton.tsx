@@ -5,12 +5,16 @@ type CustomButtonProps = {
   buttonname: string;
   size?: "1" | "2" | "3";
   type?: "button" | "submit";
+  onclick?: () => void;
+  className?: string;
 };
 
 export default function CustomButton({
   buttonname,
   size,
   type,
+  onclick,
+  className,
 }: CustomButtonProps) {
   return (
     <Button
@@ -23,6 +27,8 @@ export default function CustomButton({
         justifyContent: "flex-start",
         padding: "var(--space-2)",
       }}
+      onClick={onclick}
+      className={className}
     >
       {buttonname}
     </Button>
