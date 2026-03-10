@@ -7,6 +7,7 @@ type CustomButtonProps = {
   type?: "button" | "submit";
   onclick?: () => void;
   className?: string;
+  disabled?: boolean;
 };
 
 export default function CustomButton({
@@ -15,6 +16,7 @@ export default function CustomButton({
   type,
   onclick,
   className,
+  disabled,
 }: CustomButtonProps) {
   return (
     <Button
@@ -29,6 +31,7 @@ export default function CustomButton({
       }}
       onClick={onclick}
       className={className}
+      disabled={disabled}
     >
       {buttonname}
     </Button>
