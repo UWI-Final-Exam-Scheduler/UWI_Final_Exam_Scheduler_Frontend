@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import CustomCard from "@/app/components/ui/CustomCard";
 import CourseSelect from "@/app/components/ui/CourseSelect";
 import { apiFetch } from "@/app/lib/apiFetch";
+import CustomButton from "@/app/components/ui/CustomButton";
+import { Spinner } from "@radix-ui/themes";
 
 type Course = {
   courseCode: string;
@@ -11,16 +13,30 @@ type Course = {
   enrolledStudents: number;
 };
 
+type CoursesResponse = {
+  page: number;
+  per_page: number;
+  total: number;
+  pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+  courses: Course[];
+};
+
 export default function Courses() {
-  const [courses, setCourses] = useState([]);
+  const [courseResponse, setCourseResponse] = useState<CoursesResponse | null>(
+    null,
+  );
+  const [courses, setCourses] = useState<Course[]>([]);
   const [displayedCourses, setDisplayedCourses] = useState<Course[]>([]);
   const [dataisLoaded, setDataIsLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchCourses = async (pageNum: number) => {
       try {
-        const res = await apiFetch("/api/courses");
+        const res = await apiFetch(`/api/courses?page=${pageNum}&per_page=20`);
 
         if (!res.ok) {
           setError("Failed to fetch courses");
@@ -28,8 +44,9 @@ export default function Courses() {
         }
 
         const data = await res.json();
-        setCourses(data);
-        setDisplayedCourses(data); // this is to show all the courses first
+        setCourseResponse(data);
+        setCourses(data.courses);
+        setDisplayedCourses(data.courses); // this is to show all the courses first
       } catch (err) {
         console.error("Error fetching courses:", err);
         setError("Error fetching courses");
@@ -38,8 +55,8 @@ export default function Courses() {
       }
     };
 
-    fetchCourses();
-  }, []);
+    fetchCourses(page);
+  }, [page]);
 
   const handleCourseChange = async (courseCode: string | null) => {
     if (!courseCode) {
@@ -63,10 +80,18 @@ export default function Courses() {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1) return;
+    setPage(newPage);
+    setDataIsLoaded(false); // Set loading state when changing page
+  };
+
   if (!dataisLoaded) {
+    // when first loading the page
     return (
       <div>
         <h1>Loading...</h1>
+        <Spinner />
       </div>
     );
   }
@@ -87,7 +112,40 @@ export default function Courses() {
             </p>
           </CustomCard>
         ))}
+        {dataisLoaded &&
+          displayedCourses.length === 0 && ( // when changing the page
+            <div>
+              <h1>Loading...</h1>
+              <Spinner />
+            </div>
+          )}
         {error && <p className="text-red-500 mt-4">{error}</p>}
+      </div>
+
+      <div className="pagination mt-4 flex justify-center items-center space-x-2 gap-2">
+        <CustomButton
+          buttonname="First"
+          onclick={() => handlePageChange(1)}
+          disabled={page === 1}
+        />
+        <CustomButton
+          buttonname="Previous"
+          onclick={() => handlePageChange(page - 1)}
+          disabled={page === 1}
+        />
+        <span>
+          Page {page} / {courseResponse?.pages || 1}
+        </span>
+        <CustomButton
+          buttonname="Next"
+          onclick={() => handlePageChange(page + 1)}
+          disabled={!courseResponse?.has_next}
+        />
+        <CustomButton
+          buttonname="Last"
+          onclick={() => handlePageChange(courseResponse?.pages || 1)}
+          disabled={page === courseResponse?.pages}
+        />
       </div>
     </div>
   );
