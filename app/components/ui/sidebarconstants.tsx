@@ -22,4 +22,8 @@ export const SIDEBAR_LINKS: SideBarItem[] = [
     title: "Venues",
     href: "/venues",
   },
+  {
+    title: "Upload",
+    href: "/upload",
+  }
 ];
