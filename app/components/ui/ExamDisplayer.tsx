@@ -2,7 +2,7 @@
 
 import TimeColumn from "./TimeColumn";
 import { useState } from "react";
-import { Column, Exam } from "./calendarTypes";
+import { Column, Exam } from "../types/calendarTypes";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 
 type ExamDisplayerProps = {

@@ -1,92 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import CustomCard from "@/app/components/ui/CustomCard";
 import CourseSelect from "@/app/components/ui/CourseSelect";
-import { apiFetch } from "@/app/lib/apiFetch";
-import CustomButton from "@/app/components/ui/CustomButton";
 import { Spinner } from "@radix-ui/themes";
-
-type Course = {
-  courseCode: string;
-  name: string;
-  enrolledStudents: number;
-};
-
-type CoursesResponse = {
-  page: number;
-  per_page: number;
-  total: number;
-  pages: number;
-  has_next: boolean;
-  has_prev: boolean;
-  courses: Course[];
-};
+import { useCourses } from "@/app/hooks/useCourses";
+import { PaginationControls } from "@/app/components/ui/PaginationControls";
+import { Course } from "@/app/components/types/courseTypes";
 
 export default function Courses() {
-  const [courseResponse, setCourseResponse] = useState<CoursesResponse | null>(
-    null,
-  );
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [displayedCourses, setDisplayedCourses] = useState<Course[]>([]);
-  const [dataisLoaded, setDataIsLoaded] = useState(false);
-  const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
+  const {
+    courseResponse,
+    displayedCourses,
+    courses,
+    isLoading,
+    error,
+    page,
+    setPage,
+    handleFilterChange,
+  } = useCourses();
 
-  useEffect(() => {
-    const fetchCourses = async (pageNum: number) => {
-      try {
-        const res = await apiFetch(`/api/courses?page=${pageNum}&per_page=20`);
-
-        if (!res.ok) {
-          setError("Failed to fetch courses");
-          return;
-        }
-
-        const data = await res.json();
-        setCourseResponse(data);
-        setCourses(data.courses);
-        setDisplayedCourses(data.courses); // this is to show all the courses first
-      } catch (err) {
-        console.error("Error fetching courses:", err);
-        setError("Error fetching courses");
-      } finally {
-        setDataIsLoaded(true);
-      }
-    };
-
-    fetchCourses(page);
-  }, [page]);
-
-  const handleCourseChange = async (courseCode: string | null) => {
-    if (!courseCode) {
-      setDisplayedCourses(courses);
-      return;
-    }
-
-    try {
-      const res = await apiFetch(`/api/courses/${courseCode}`);
-
-      if (!res.ok) {
-        setError("Failed to fetch course details");
-        return;
-      }
-      const courseDetails = await res.json();
-      setDisplayedCourses([courseDetails]);
-      setError("");
-    } catch (err) {
-      console.error("Error handling course change:", err);
-      setError("Error handling course change");
-    }
-  };
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1) return;
-    setPage(newPage);
-    setDataIsLoaded(false); // Set loading state when changing page
-  };
-
-  if (!dataisLoaded) {
+  if (isLoading && !courseResponse) {
     // when first loading the page
     return (
       <div>
@@ -100,7 +33,7 @@ export default function Courses() {
     <div>
       <h1>Courses Page</h1>
       <div className="mb-4">
-        <CourseSelect data={courses} onChange={handleCourseChange} />
+        <CourseSelect key={page} data={courses} onChange={handleFilterChange} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {displayedCourses.map((course: Course) => (
@@ -112,7 +45,7 @@ export default function Courses() {
             </p>
           </CustomCard>
         ))}
-        {dataisLoaded &&
+        {isLoading &&
           displayedCourses.length === 0 && ( // when changing the page
             <div>
               <h1>Loading...</h1>
@@ -121,32 +54,12 @@ export default function Courses() {
           )}
         {error && <p className="text-red-500 mt-4">{error}</p>}
       </div>
-
-      <div className="pagination mt-4 flex justify-center items-center space-x-2 gap-2">
-        <CustomButton
-          buttonname="First"
-          onclick={() => handlePageChange(1)}
-          disabled={page === 1}
-        />
-        <CustomButton
-          buttonname="Previous"
-          onclick={() => handlePageChange(page - 1)}
-          disabled={page === 1}
-        />
-        <span>
-          Page {page} / {courseResponse?.pages || 1}
-        </span>
-        <CustomButton
-          buttonname="Next"
-          onclick={() => handlePageChange(page + 1)}
-          disabled={!courseResponse?.has_next}
-        />
-        <CustomButton
-          buttonname="Last"
-          onclick={() => handlePageChange(courseResponse?.pages || 1)}
-          disabled={page === courseResponse?.pages}
-        />
-      </div>
+      <PaginationControls
+        page={page}
+        totalPages={courseResponse?.pages || 1}
+        hasNext={courseResponse?.has_next || false}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

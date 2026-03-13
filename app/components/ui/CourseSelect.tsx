@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Select, { SingleValue } from "react-select";
 
 type Option = { value: string; label: string };
@@ -26,6 +26,7 @@ export default function CourseSelect({ data, onChange }: SelectProps) {
 
   return (
     <Select
+      instanceId="course-select"
       options={options}
       value={selectedCourse}
       placeholder="Select a course..."
