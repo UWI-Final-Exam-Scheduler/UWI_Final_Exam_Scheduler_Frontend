@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Column as ColumnType, Exam } from "./calendarTypes";
+import { Column as ColumnType, Exam } from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
 

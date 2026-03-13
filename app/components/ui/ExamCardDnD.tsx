@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import CustomCard from "./CustomCard";
-import { Exam } from "./calendarTypes";
+import { Exam } from "../types/calendarTypes";
 
 export default function ExamCardDnD({ exam }: { exam: Exam }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
