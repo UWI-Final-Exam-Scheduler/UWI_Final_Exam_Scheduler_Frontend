@@ -1,4 +1,4 @@
-import { SideBarItem } from "./sidebartypes";
+import { SideBarItem } from "../types/sidebartypes";
 import { Icon } from "@iconify/react";
 
 export const SIDEBAR_LINKS: SideBarItem[] = [
@@ -25,5 +25,5 @@ export const SIDEBAR_LINKS: SideBarItem[] = [
   {
     title: "Upload",
     href: "/upload",
-  }
+  },
 ];

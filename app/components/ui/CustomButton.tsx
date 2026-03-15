@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 type CustomButtonProps = {
   buttonname: string;
+  color?: "blue" | "gray";
   size?: "1" | "2" | "3";
   type?: "button" | "submit";
   onclick?: () => void;
@@ -17,11 +18,12 @@ export default function CustomButton({
   onclick,
   className,
   disabled,
+  color = "blue",
 }: CustomButtonProps) {
   return (
     <Button
       variant="solid"
-      color="blue"
+      color={color}
       radius="large"
       type={type || "button"}
       size={size || "2"}
