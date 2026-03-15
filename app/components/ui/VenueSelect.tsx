@@ -26,6 +26,7 @@ export default function VenueSelect({ data, onChange }: SelectProps) {
 
   return (
     <Select
+      instanceId="venue-select"
       options={options}
       value={selectedVenue}
       placeholder="Select a venue..."

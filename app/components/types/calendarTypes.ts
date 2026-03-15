@@ -8,3 +8,16 @@ export type Exam = {
   courseCode: string;
   timeColumnId: string;
 };
+
+export type ExamDisplayerProps = {
+  selectedDay: Date;
+};
+
+export type PendingMove = {
+  examId: string;
+  exam: Exam;
+  fromColumnId: string;
+  toColumnId: string;
+  from: string;
+  to: string;
+};

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
-import { SIDEBAR_LINKS } from "./sidebarconstants";
+import { SIDEBAR_LINKS } from "../constants/sidebarconstants";
 import { usePathname } from "next/navigation";
 import { Box, Button, Flex, Text } from "@radix-ui/themes";
 
