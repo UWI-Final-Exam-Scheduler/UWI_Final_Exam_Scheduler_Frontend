@@ -11,6 +11,12 @@ export type Exam = {
 
 export type ExamDisplayerProps = {
   selectedDay: Date;
+  exams: Exam[];
+  columns: Column[];
+  alertOpen: boolean;
+  pendingMove: PendingMove | null;
+  handleConfirmMove: () => void;
+  handleCancelMove: () => void;
 };
 
 export type PendingMove = {

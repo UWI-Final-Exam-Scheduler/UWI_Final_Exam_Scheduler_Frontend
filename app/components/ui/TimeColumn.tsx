@@ -11,13 +11,18 @@ type TimeColumnProps = {
 };
 
 export default function TimeColumn({ column, exams }: TimeColumnProps) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
   return (
     <div className="flex flex-col gap-4 border rounded-lg p-4 shadow-md/10">
       <h2 className="text-lg font-semibold">{column.title}</h2>
-      <div ref={setNodeRef} className="flex flex-col gap-3 p-4">
+      <div
+        ref={setNodeRef}
+        className={`flex flex-col gap-3 p-4 min-h-24 rounded-lg transition-colors ${
+          isOver ? "bg-blue-50 border-2 border-blue-300 border-dashed" : ""
+        }`} // an effect to show when hovering over the column
+      >
         {exams.map((exam) => (
           <ExamCardDnD key={exam.id} exam={exam} />
         ))}

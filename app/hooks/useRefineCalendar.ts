@@ -1,23 +1,20 @@
 import { useState } from "react";
 import { Column, Exam, PendingMove } from "../components/types/calendarTypes";
 import { DragEndEvent } from "@dnd-kit/core";
+import rawdata from "../testdata/exams.json";
 
-const TIMECOLUMNS: Column[] = [
-  { id: "9", title: "9:00 AM" },
-  { id: "1", title: "1:00 PM" },
-  { id: "4", title: "4:00 PM" },
-];
-
-const EXAMS: Exam[] = [
-  { id: "1", courseCode: "CSC101", timeColumnId: "9" },
-  { id: "2", courseCode: "MAT202", timeColumnId: "1" },
-  { id: "3", courseCode: "PHY303", timeColumnId: "4" },
-  { id: "4", courseCode: "ENG404", timeColumnId: "9" },
-];
+const data = rawdata as { columns: Column[]; exams: Exam[] };
 
 export function useRefineCalendar() {
-  const [exams, setExams] = useState<Exam[]>(EXAMS);
-  const [columns] = useState<Column[]>(TIMECOLUMNS);
+  const [exams, setExams] = useState<Exam[]>(() => {
+    try {
+      const storedExams = localStorage.getItem("exams");
+      return storedExams ? JSON.parse(storedExams) : data.exams;
+    } catch {
+      return data.exams;
+    }
+  });
+  const [columns] = useState<Column[]>(data.columns);
   const [alertOpen, setAlertOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
 
@@ -52,16 +49,16 @@ export function useRefineCalendar() {
   function handleConfirmMove() {
     if (!pendingMove) return;
 
-    setExams(() =>
-      exams.map((exam) =>
-        exam.id === pendingMove.examId
-          ? {
-              ...exam,
-              timeColumnId: pendingMove.toColumnId,
-            }
-          : exam,
-      ),
+    // testing chnaging data in local storage
+    const updated = exams.map((exam) =>
+      exam.id === pendingMove.examId
+        ? { ...exam, timeColumnId: pendingMove.toColumnId }
+        : exam,
     );
+    setExams(updated);
+    localStorage.setItem("exams", JSON.stringify(updated));
+    //
+
     setPendingMove(null);
     setAlertOpen(false);
   }
