@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Sidebar from "../components/ui/Sidebar";
 import Image from "next/image";
+import React, { Suspense } from "react";
 
 export default function AppLayout({
   children,
@@ -21,7 +22,9 @@ export default function AppLayout({
       </header>
       <div className="min-h-screen flex flex-row p-4 gap-4">
         <Sidebar />
-        <main className="flex-1 p-4">{children}</main>
+        <Suspense fallback={<div>Loading...</div>}>
+          <main className="flex-1 p-4">{children}</main>
+        </Suspense>
       </div>
     </div>
   );

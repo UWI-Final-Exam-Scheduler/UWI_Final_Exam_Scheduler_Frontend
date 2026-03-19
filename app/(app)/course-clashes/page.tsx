@@ -1,4 +1,5 @@
 "use client";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCourseClashMatrix } from "@/app/hooks/useCourseClashMatrix";
 import CourseClashMatrix from "@/app/components/ui/CourseClashMatrix";
