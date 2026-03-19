@@ -19,9 +19,9 @@ export default function AppLayout({
         />
         <h1 className="text-xl font-bold">Exam Scheduler</h1>
       </header>
-      <div className="min-h-screen flex md:grid md:grid-cols-5 p-4 gap-4">
+      <div className="min-h-screen flex flex-row p-4 gap-4">
         <Sidebar />
-        <main className="flex-1 md:col-span-4 p-4">{children}</main>
+        <main className="flex-1 p-4">{children}</main>
       </div>
     </div>
   );

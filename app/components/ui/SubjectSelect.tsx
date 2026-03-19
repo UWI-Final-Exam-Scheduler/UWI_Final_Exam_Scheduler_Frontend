@@ -11,10 +11,12 @@ export default function SubjectSelect({ data, onChange }: SelectProps) {
     onChange?.(option ? option.value : null);
   };
 
+  const optionsWithAll = [{ value: "", label: "All" }, ...data];
+
   return (
     <Select
       instanceId="subject-select"
-      options={data}
+      options={optionsWithAll}
       value={selectedSubject}
       placeholder="Select a subject..."
       onChange={handleChange}

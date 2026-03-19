@@ -30,6 +30,7 @@ export default function CustomButton({
       style={{
         justifyContent: "flex-start",
         padding: "var(--space-2)",
+        cursor: disabled ? "not-allowed" : "pointer",
       }}
       onClick={onclick}
       className={className}
