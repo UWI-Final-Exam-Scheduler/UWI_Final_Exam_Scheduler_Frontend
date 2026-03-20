@@ -1,4 +1,4 @@
-import { Card, Box, Flex, Text } from "@radix-ui/themes";
+import { Card, Flex, Text } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 
 type CardProps = {

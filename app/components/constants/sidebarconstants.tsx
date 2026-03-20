@@ -11,14 +11,6 @@ export const SIDEBAR_LINKS: SideBarItem[] = [
     href: "/courses",
   },
   {
-    title: "Enrollments",
-    href: "/enrollments",
-  },
-  {
-    title: "Students",
-    href: "/students",
-  },
-  {
     title: "Venues",
     href: "/venues",
   },

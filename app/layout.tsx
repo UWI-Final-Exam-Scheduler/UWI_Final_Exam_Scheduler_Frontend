@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@radix-ui/themes/styles.css";
 import { Theme } from "@radix-ui/themes";
+import Providers from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,12 +30,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Theme accentColor="blue" grayColor="gray">
-          {children}
-          <footer className="bg-blue-500 p-4 text-white">
-            © 2026 Exam Scheduler
-          </footer>
-        </Theme>
+        <Providers>
+          <Theme accentColor="blue" grayColor="gray">
+            {children}
+            <footer className="bg-blue-500 p-4 text-white">
+              © 2026 Exam Scheduler
+            </footer>
+          </Theme>
+        </Providers>
       </body>
     </html>
   );
