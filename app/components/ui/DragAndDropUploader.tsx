@@ -16,9 +16,10 @@ export default function DragAndDropUploader() {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL}/upload`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL}/api/upload`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       const data = await res.json();
