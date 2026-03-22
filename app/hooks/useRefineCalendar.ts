@@ -2,18 +2,12 @@ import { useState } from "react";
 import { Column, Exam, PendingMove } from "../components/types/calendarTypes";
 import { DragEndEvent } from "@dnd-kit/core";
 import rawdata from "../testdata/exams.json";
+import { useExams } from "./useExams";
 
 const data = rawdata as { columns: Column[]; exams: Exam[] };
 
 export function useRefineCalendar() {
-  const [exams, setExams] = useState<Exam[]>(() => {
-    try {
-      const storedExams = localStorage.getItem("exams");
-      return storedExams ? JSON.parse(storedExams) : data.exams;
-    } catch {
-      return data.exams;
-    }
-  });
+  const { exams, setExams } = useExams();
   const [columns] = useState<Column[]>(data.columns);
   const [alertOpen, setAlertOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
@@ -70,7 +64,6 @@ export function useRefineCalendar() {
 
   return {
     exams,
-    columns,
     alertOpen,
     pendingMove,
     handleExamDrag,

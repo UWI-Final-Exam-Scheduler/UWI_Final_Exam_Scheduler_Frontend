@@ -7,12 +7,12 @@ export type Exam = {
   id: string;
   courseCode: string;
   timeColumnId: string;
+  date: string;
 };
 
 export type ExamDisplayerProps = {
-  selectedDay: Date;
   exams: Exam[];
-  columns: Column[];
+  selectedDay: Date;
   alertOpen: boolean;
   pendingMove: PendingMove | null;
   handleConfirmMove: () => void;
