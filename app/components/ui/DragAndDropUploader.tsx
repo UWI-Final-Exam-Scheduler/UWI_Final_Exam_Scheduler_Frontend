@@ -16,15 +16,18 @@ export default function DragAndDropUploader() {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL}/api/upload`, {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL}/api/upload`,
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        },
+      );
 
       const data = await res.json();
 
-      if(!res.ok) {
+      if (!res.ok) {
         throw new Error(data.error || "Upload Failed");
       }
 
@@ -38,12 +41,12 @@ export default function DragAndDropUploader() {
     } finally {
       setUploading(false);
     }
-  }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       if (acceptedFiles.length > 0) {
-        handleUpload(acceptedFiles[0])
+        handleUpload(acceptedFiles[0]);
       }
     },
     accept: {
@@ -80,11 +83,7 @@ export default function DragAndDropUploader() {
         )}
       </div>
 
-      {message && (
-        <p className="mt-4 text-sm">
-          {message}
-        </p>
-      )}
+      {message && <p className="mt-4 text-sm">{message}</p>}
     </div>
   );
 }

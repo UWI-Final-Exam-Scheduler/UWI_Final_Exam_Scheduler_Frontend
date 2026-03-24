@@ -4,7 +4,7 @@ import { Exam } from "../types/calendarTypes";
 
 export default function ExamCardDnD({ exam }: { exam: Exam }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: exam.id,
+    id: String(exam.id),
   });
 
   const style = transform

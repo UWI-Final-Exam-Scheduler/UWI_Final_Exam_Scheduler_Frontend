@@ -3,19 +3,17 @@
 import TimeColumn from "./TimeColumn";
 import ScheduleAlert from "./ScheduleAlert";
 import { ExamDisplayerProps } from "../types/calendarTypes";
-import { useColumns } from "@/app/hooks/useColumns";
-import { Column } from "../types/calendarTypes";
 
 export default function ExamDisplayer({
   selectedDay,
   exams,
+  columns,
   alertOpen,
   pendingMove,
+  isLoading,
   handleConfirmMove,
   handleCancelMove,
 }: ExamDisplayerProps) {
-  const columns = useColumns();
-
   const timeColumns = columns.filter((col) => col.id !== "0");
 
   return (
@@ -38,7 +36,8 @@ export default function ExamDisplayer({
             <TimeColumn
               key={timecolumn.id}
               column={timecolumn}
-              exams={exams.filter(
+              isLoading={isLoading}
+              exams={(exams ?? []).filter(
                 (exam) => exam.timeColumnId === timecolumn.id,
               )}
             />

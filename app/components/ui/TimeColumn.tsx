@@ -4,29 +4,41 @@ import React from "react";
 import { Column as ColumnType, Exam } from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
+import { Spinner } from "@radix-ui/themes";
 
 type TimeColumnProps = {
   column: ColumnType;
   exams: Exam[];
+  isLoading?: boolean;
 };
 
-export default function TimeColumn({ column, exams }: TimeColumnProps) {
+export default function TimeColumn({
+  column,
+  exams,
+  isLoading,
+}: TimeColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
   return (
     <div className="flex flex-col gap-4 border rounded-lg p-4 shadow-md/10">
       <h2 className="text-lg font-semibold">{column.title}</h2>
-      <div
-        ref={setNodeRef}
-        className={`flex flex-col gap-3 p-4 min-h-24 rounded-lg transition-colors ${
-          isOver ? "bg-blue-50 border-2 border-blue-300 border-dashed" : ""
-        }`} // an effect to show when hovering over the column
-      >
-        {exams.map((exam) => (
-          <ExamCardDnD key={exam.id} exam={exam} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-24">
+          <Spinner />
+        </div>
+      ) : (
+        <div
+          ref={setNodeRef}
+          className={`flex flex-col gap-3 p-4 min-h-24 rounded-lg transition-colors ${
+            isOver ? "bg-blue-50 border-2 border-blue-300 border-dashed" : ""
+          }`} // an effect to show when hovering over the column
+        >
+          {exams.map((exam) => (
+            <ExamCardDnD key={exam.id} exam={exam} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
