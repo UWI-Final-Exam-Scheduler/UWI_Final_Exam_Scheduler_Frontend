@@ -24,13 +24,17 @@ export default function CalendarDayPicker({
 
   const {
     exams,
+    haveExamsDay,
+    rescheduleExams,
     columns,
     alertOpen,
     pendingMove,
     handleExamDrag,
     handleConfirmMove,
     handleCancelMove,
-  } = useRefineCalendar();
+    isLoading,
+  } = useRefineCalendar(selected);
+
   const rescheduleColumn = columns.find((col) => col.id === "0");
 
   const handleDaySelect = (selectedDay: Date | undefined) => {
@@ -59,11 +63,19 @@ export default function CalendarDayPicker({
                 onSelect={handleDaySelect}
                 startMonth={startMonth}
                 endMonth={endMonth}
+                modifiers={{ hasExam: haveExamsDay }}
+                modifiersStyles={{
+                  hasExam: {
+                    fontWeight: "bold",
+                    textDecoration: "underline",
+                    color: "#3b82f6",
+                  },
+                }}
                 style={
                   {
                     "--rdp-accent-color": "#3b82f6",
-                    "--rdp-day-width": "60px",
-                    "--rdp-day-height": "60px",
+                    "--rdp-day-width": "70px",
+                    "--rdp-day-height": "70px",
                     "--rdp-month-caption-font-size": "1.25rem",
                     "--rdp-weekday-font-size": "1rem",
                   } as React.CSSProperties
@@ -84,6 +96,7 @@ export default function CalendarDayPicker({
                 columns={columns}
                 alertOpen={alertOpen}
                 pendingMove={pendingMove}
+                isLoading={isLoading}
                 handleConfirmMove={handleConfirmMove}
                 handleCancelMove={handleCancelMove}
               />
@@ -95,7 +108,8 @@ export default function CalendarDayPicker({
           <aside className="w-48 shrink-0">
             <TimeColumn
               column={rescheduleColumn}
-              exams={exams.filter((exam) => exam.timeColumnId === "0")}
+              exams={rescheduleExams ?? []}
+              isLoading={isLoading}
             />
           </aside>
         )}

@@ -10,6 +10,7 @@ export default function ExamDisplayer({
   columns,
   alertOpen,
   pendingMove,
+  isLoading,
   handleConfirmMove,
   handleCancelMove,
 }: ExamDisplayerProps) {
@@ -35,7 +36,8 @@ export default function ExamDisplayer({
             <TimeColumn
               key={timecolumn.id}
               column={timecolumn}
-              exams={exams.filter(
+              isLoading={isLoading}
+              exams={(exams ?? []).filter(
                 (exam) => exam.timeColumnId === timecolumn.id,
               )}
             />
