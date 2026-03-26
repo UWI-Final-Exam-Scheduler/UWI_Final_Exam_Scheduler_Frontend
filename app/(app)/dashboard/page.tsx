@@ -13,8 +13,8 @@ export default function Dashboard() {
     <div>
       <h1>Dashboard Page</h1>
       <CalendarDayPicker
-        startMonth={new Date(2026, 4)}
-        endMonth={new Date(2026, 5)}
+        startMonth={new Date(2026, 11)}
+        endMonth={new Date(2026, 11)}
       />
     </div>
   );

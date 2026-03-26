@@ -18,6 +18,7 @@ export type Exam = {
 export type ExamDisplayerProps = {
   exams: Exam[];
   columns: Column[];
+  venues: Venue[];
   selectedDay: Date;
   alertOpen: boolean;
   isLoading: boolean;
@@ -33,4 +34,17 @@ export type PendingMove = {
   toColumnId: string;
   from: string;
   to: string;
+  toVenueId?: number;
+};
+
+export type CalendarMoveActions = {
+  handleMoveToReschedule: (move: PendingMove) => Promise<void>;
+  handleMoveFromReschedule: (move: PendingMove, date: Date) => Promise<void>;
+  handleSameDayTimeChange: (move: PendingMove) => Promise<void>;
+};
+
+export type Venue = {
+  id: number;
+  name: string;
+  capacity: number;
 };
