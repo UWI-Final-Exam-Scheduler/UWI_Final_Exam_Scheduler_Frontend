@@ -1,0 +1,80 @@
+import { useState, useRef, useEffect } from "react";
+import { Exam, Venue } from "../components/types/calendarTypes";
+import {
+  get_days_with_exams,
+  fetchExamstobeRescheduled,
+  formatDatetoString,
+  examFetchbyDate,
+} from "../lib/examFetch";
+import { venueFetch } from "../lib/venueFetch";
+
+export function useCalendarExamFetch(date: Date | undefined) {
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [rescheduleExams, setRescheduleExams] = useState<Exam[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [haveExamsDay, setHaveExamsDay] = useState<Date[]>([]);
+  const selectedDateRef = useRef<Date | undefined>(undefined);
+
+  const fetchDaysWithExams = async () => {
+    try {
+      const days: string[] = await get_days_with_exams();
+      setHaveExamsDay(days.map((d) => new Date(d + "T12:00:00")));
+    } catch (error) {
+      console.error("Error fetching days with exams:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDaysWithExams();
+  }, []);
+
+  useEffect(() => {
+    venueFetch()
+      .then((data: Venue[]) => setVenues(data))
+      .catch((err: unknown) => console.error("Failed to fetch venues:", err));
+  }, []);
+
+  useEffect(() => {
+    fetchExamstobeRescheduled()
+      .then(setRescheduleExams)
+      .catch((err) => {
+        console.error("Failed to fetch reschedule exams:", err);
+        setRescheduleExams([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    selectedDateRef.current = date;
+    if (!date) return;
+    const fetchExams = async () => {
+      setIsLoading(true);
+      try {
+        const data = await examFetchbyDate(formatDatetoString(date));
+        setExams(
+          data.map((exam: Exam) => ({
+            ...exam,
+            timeColumnId: String(exam.time),
+          })),
+        );
+      } catch (err) {
+        console.error("Failed to fetch exams:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchExams();
+  }, [date]);
+
+  return {
+    exams,
+    setExams,
+    rescheduleExams,
+    setRescheduleExams,
+    haveExamsDay,
+    isLoading,
+    fetchDaysWithExams,
+    selectedDateRef,
+    venues,
+  };
+}

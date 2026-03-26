@@ -8,6 +8,7 @@ export default function ExamDisplayer({
   selectedDay,
   exams,
   columns,
+  venues,
   alertOpen,
   pendingMove,
   isLoading,
@@ -36,6 +37,7 @@ export default function ExamDisplayer({
             <TimeColumn
               key={timecolumn.id}
               column={timecolumn}
+              venues={venues}
               isLoading={isLoading}
               exams={(exams ?? []).filter(
                 (exam) => exam.timeColumnId === timecolumn.id,

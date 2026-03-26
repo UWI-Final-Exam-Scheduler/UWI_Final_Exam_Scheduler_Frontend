@@ -26,6 +26,7 @@ export default function CalendarDayPicker({
     exams,
     haveExamsDay,
     rescheduleExams,
+    venues,
     columns,
     alertOpen,
     pendingMove,
@@ -62,7 +63,7 @@ export default function CalendarDayPicker({
                 selected={selected}
                 onSelect={handleDaySelect}
                 startMonth={startMonth}
-                endMonth={endMonth}
+                endMonth={startMonth}
                 modifiers={{ hasExam: haveExamsDay }}
                 modifiersStyles={{
                   hasExam: {
@@ -94,6 +95,7 @@ export default function CalendarDayPicker({
                 selectedDay={selected}
                 exams={exams}
                 columns={columns}
+                venues={venues}
                 alertOpen={alertOpen}
                 pendingMove={pendingMove}
                 isLoading={isLoading}
@@ -105,7 +107,7 @@ export default function CalendarDayPicker({
         </Box>
 
         {rescheduleColumn && (
-          <aside className="w-48 shrink-0">
+          <aside className="w-48 shrink-0 sticky top-4 self-start">
             <TimeColumn
               column={rescheduleColumn}
               exams={rescheduleExams ?? []}
