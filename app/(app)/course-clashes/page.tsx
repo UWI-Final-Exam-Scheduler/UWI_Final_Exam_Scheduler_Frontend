@@ -28,6 +28,10 @@ export default function CourseClashMatrixPage() {
     if (searchParams.get("subject"))
       params.set("subject", searchParams.get("subject")!);
     if (searchParams.get("page")) params.set("page", searchParams.get("page")!);
+    if (searchParams.get("courseCodeFilter"))
+      params.set("courseCodeFilter", searchParams.get("courseCodeFilter")!);
+    if (searchParams.get("clashFilter"))
+      params.set("clashFilter", searchParams.get("clashFilter")!);
     const url = `/courses${params.toString() ? `?${params.toString()}` : ""}`;
     router.push(url as Route);
   };

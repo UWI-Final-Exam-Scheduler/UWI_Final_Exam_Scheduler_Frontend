@@ -1,7 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { Route } from "next";
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import CustomCard from "@/app/components/ui/CustomCard";
 import { Spinner } from "@radix-ui/themes";
 import { useCourses } from "@/app/hooks/useCourses";
@@ -13,16 +12,27 @@ import CourseClashFilter, {
 } from "@/app/components/ui/CourseClashFilter";
 import ClashMatrixSidebar from "@/app/components/ui/ClashMatrixSidebar";
 import { useClashMatrix } from "@/app/hooks/useClashMatrix";
-import { useThresholds } from "@/app/hooks/useThresholds";
-import {
-  useUserPreferences,
-  useUpdateUserPreferences,
-} from "@/app/hooks/usePreference";
+import { useCoursesPageFilters } from "@/app/hooks/useCoursesPageFilters";
+import { useCoursesThresholdPreferences } from "@/app/hooks/useCoursesThresholdPreferences";
 
 const normalizeCourseCode = (code: string) => code.trim().toUpperCase();
 
 export default function Courses() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const subjectFromUrl = searchParams.get("subject");
+  const pageFromUrl = Number(searchParams.get("page") || "1");
+  const initialPage =
+    Number.isFinite(pageFromUrl) && pageFromUrl > 0 ? pageFromUrl : 1;
+  const clashFilterFromUrl = searchParams.get("clashFilter");
+  const initialClashFilter: ClashFilterValue =
+    clashFilterFromUrl === "with" ||
+    clashFilterFromUrl === "without" ||
+    clashFilterFromUrl === "all"
+      ? clashFilterFromUrl
+      : "all";
+  const courseCodeFilterFromUrl = searchParams.get("courseCodeFilter");
+
   const {
     paginationResponse: courseResponse,
     displayedCourses,
@@ -32,10 +42,8 @@ export default function Courses() {
     page,
     setPage,
     handleFilterChange,
-  } = useCourses();
+  } = useCourses(subjectFromUrl, initialPage);
 
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [clashFilter, setClashFilter] = useState<ClashFilterValue>("all");
   const [showSidebar] = useState(true);
 
   const {
@@ -45,11 +53,11 @@ export default function Courses() {
     setInputAbsoluteThreshold,
     percentageThreshold,
     absoluteThreshold,
-    setPercentageThreshold,
-    setAbsoluteThreshold,
-    handleApplyThresholds,
     alertMsg,
-  } = useThresholds();
+    handleApplyAndSaveThresholds,
+  } = useCoursesThresholdPreferences({
+    onThresholdsApplied: () => setPage(1),
+  });
 
   const absForBackend = Number(absoluteThreshold) || 0;
   const {
@@ -61,67 +69,26 @@ export default function Courses() {
     coursesWithClashes,
   } = useClashMatrix(absForBackend, percentageThreshold);
 
-  const { data: userPreferences } = useUserPreferences();
-  const updateUserPreferences = useUpdateUserPreferences();
-
-  useEffect(() => {
-    if (userPreferences) {
-      const savedPercentage = userPreferences.perc_threshold * 100;
-      const savedAbsolute = String(userPreferences.abs_threshold);
-
-      setInputPercentageThreshold(savedPercentage);
-      setInputAbsoluteThreshold(savedAbsolute);
-      setPercentageThreshold(savedPercentage);
-      setAbsoluteThreshold(savedAbsolute);
-    }
-  }, [
-    userPreferences,
-    setInputPercentageThreshold,
-    setInputAbsoluteThreshold,
-    setPercentageThreshold,
-    setAbsoluteThreshold,
-  ]);
-
-  async function handleApplyAndSaveThresholds() {
-    handleApplyThresholds();
-
-    try {
-      await updateUserPreferences.mutateAsync({
-        abs_threshold: Number(inputAbsoluteThreshold) || 0,
-        perc_threshold: (Number(inputPercentageThreshold) || 0) / 100,
-      });
-    } catch (saveError) {
-      console.error("Failed to save user preferences", saveError);
-    }
-  }
-
-  const handleCourseClick = (course: Course) => {
-    const params = new URLSearchParams();
-    if (selectedSubject) params.set("subject", selectedSubject);
-    params.set("page", String(page));
-    router.push(
-      `/course-clashes?courseCode=${course.courseCode}&enrolledStudents=${course.enrolledStudents}&${params.toString()}` as Route,
-    );
-  };
-
-  const filteredCourses = useMemo(() => {
-    return displayedCourses.filter((course) => {
-      const hasClash = coursesWithClashes.has(
-        normalizeCourseCode(course.courseCode),
-      );
-
-      if (clashFilter === "with") return hasClash;
-      if (clashFilter === "without") return !hasClash;
-      return true;
-    });
-  }, [displayedCourses, clashFilter, coursesWithClashes]);
-
-  // Now paginate the filtered list
-  const pageSize = 20;
-  const paginatedCourses = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredCourses.slice(start, start + pageSize);
-  }, [filteredCourses, page, pageSize]);
+  const {
+    selectedSubject,
+    selectedCourseCode,
+    clashFilter,
+    courseCodeOptions,
+    filteredCourses,
+    onSubjectChange,
+    onCourseCodeChange,
+    onClashFilterChange,
+    handleCourseClick,
+  } = useCoursesPageFilters({
+    displayedCourses,
+    coursesWithClashes,
+    page,
+    setPage,
+    handleFilterChange,
+    initialSubject: subjectFromUrl,
+    initialCourseCode: courseCodeFilterFromUrl,
+    initialClashFilter,
+  });
 
   return (
     <div className="flex gap-x-4">
@@ -154,15 +121,28 @@ export default function Courses() {
           <div className="w-full md:max-w-105">
             <SubjectSelect
               data={subjectCodes}
-              onChange={(val) => {
-                setSelectedSubject(val);
-                handleFilterChange(val);
-              }}
+              value={selectedSubject}
+              instanceId="subject-filter-select"
+              placeholder="Select a subject..."
+              onChange={onSubjectChange}
             />
           </div>
 
           <div className="w-full md:max-w-65">
-            <CourseClashFilter value={clashFilter} onChange={setClashFilter} />
+            <SubjectSelect
+              data={courseCodeOptions}
+              value={selectedCourseCode}
+              instanceId="course-code-filter-select"
+              placeholder="Select a course code..."
+              onChange={onCourseCodeChange}
+            />
+          </div>
+
+          <div className="w-full md:max-w-65">
+            <CourseClashFilter
+              value={clashFilter}
+              onChange={onClashFilterChange}
+            />
           </div>
         </div>
 
@@ -187,7 +167,7 @@ export default function Courses() {
 
         {!isLoading && !loadingClashes && filteredCourses.length !== 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full">
-            {paginatedCourses.map((course: Course) => {
+            {filteredCourses.map((course: Course) => {
               const hasClash = coursesWithClashes.has(
                 normalizeCourseCode(course.courseCode),
               );
