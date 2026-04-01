@@ -6,10 +6,7 @@ import {
 } from "@/app/lib/courseFetch";
 import { Course, CoursesResponse } from "@/app/components/types/courseTypes";
 
-export function useCourses(
-  initialSubject: string | null = null,
-  initialPage: number = 1,
-) {
+export function useCourses() {
   const [paginationResponse, setPaginationResponse] =
     useState<CoursesResponse | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -19,14 +16,13 @@ export function useCourses(
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [page, setPage] = useState(initialPage);
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(
-    initialSubject,
-  );
+  const [page, setPage] = useState(1);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 
   const loadCourses = useCallback(
     async (subjectCode: string | null, pageNum: number) => {
       setIsLoading(true);
+      // setDisplayedCourses([]);
       try {
         if (!subjectCode) {
           const data = await courseFetch(pageNum);
@@ -52,9 +48,9 @@ export function useCourses(
 
   useEffect(() => {
     loadCourses(selectedSubject, page);
-  }, [page, selectedSubject, loadCourses]);
+  }, [page, selectedSubject]);
 
-  const handleFilterChange = useCallback((subjectCode: string | null) => {
+  const handleFilterChange = useCallback(async (subjectCode: string | null) => {
     setSelectedSubject(subjectCode);
     setPage(1);
   }, []);

@@ -9,8 +9,6 @@ export default function ClashMatrixSidebar({
   onApply,
   clashCount,
   totalCourses = 0,
-  affectedStudentsCount,
-  affectedStudentsPercentage,
 }: {
   percentageThreshold?: number;
   absoluteThreshold?: string;
@@ -19,14 +17,11 @@ export default function ClashMatrixSidebar({
   onApply?: () => void;
   clashCount?: number;
   totalCourses?: number;
-  affectedStudentsCount?: number;
-  affectedStudentsPercentage?: number;
 }) {
   return (
-    <aside className="w-90 flex flex-col border rounded-lg bg-white py-6 px-6 mr-6 h-112.5">
+    <aside className="w-80 flex flex-col border rounded-lg bg-white py-6 px-6 mr-6 h-[400px]">
       <div className="flex-1 flex flex-col">
         <h2 className="text-2xl font-bold mb-6 text-center">Clash Metrics</h2>
-
         <div className="mb-8">
           <label className="block mb-2 font-semibold">
             Percentage Threshold: {percentageThreshold}%
@@ -40,7 +35,6 @@ export default function ClashMatrixSidebar({
             className="w-full blue cursor-pointer"
           />
         </div>
-
         <div className="mb-8">
           <label className="block mb-2 font-semibold">Absolute Threshold</label>
           <input
@@ -50,7 +44,6 @@ export default function ClashMatrixSidebar({
             className="w-full border rounded px-2 py-1 cursor-pointer"
           />
         </div>
-
         <div className="flex flex-col gap-1 mb-4 text-left pl-1">
           <span className="text-orange-600 font-semibold flex items-center gap-2">
             Courses with Clashes:
@@ -60,26 +53,11 @@ export default function ClashMatrixSidebar({
               <span>{clashCount}</span>
             )}
           </span>
-
-          <span className="text-gray-700 font-semibold flex items-center gap-2">
-            Students Affected:
-            {affectedStudentsCount === undefined ||
-            affectedStudentsPercentage === undefined ? (
-              <Spinner className="inline-block align-middle" />
-            ) : (
-              <span>
-                {affectedStudentsCount} ({affectedStudentsPercentage.toFixed(2)}
-                %)
-              </span>
-            )}
-          </span>
-
           <span className="text-gray-700 font-semibold">
             Total Courses: {totalCourses}
           </span>
         </div>
       </div>
-
       <div className="flex justify-center mt-0">
         <CustomButton
           buttonname="Apply Thresholds"
