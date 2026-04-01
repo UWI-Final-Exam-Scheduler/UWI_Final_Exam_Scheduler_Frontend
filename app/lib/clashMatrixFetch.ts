@@ -6,17 +6,13 @@ type ClashMatrixResponse = {
     course2: string;
     clash_count: number;
   }>;
-  courses: Array<{
-    course: string;
-    has_clash: boolean;
-  }>;
+  courses_with_clashes: string[];
   total_conflicts: number;
   unique_courses_with_conflicts: number;
   total_students_affected: number;
   percentage_students_affected: number;
 };
 
-// Fetch the clash matrix for ALL courses (after thresholds are applied)
 export async function getClashMatrix(
   abs_threshold: number,
   perc_threshold: number,
@@ -24,7 +20,6 @@ export async function getClashMatrix(
   const response = await apiFetch(
     `/api/clash-matrix?abs_threshold=${abs_threshold}&perc_threshold=${perc_threshold}`,
   );
-
   if (!response.ok) {
     throw new Error("Failed to fetch clash matrix. Refresh to try again.");
   }
@@ -33,7 +28,7 @@ export async function getClashMatrix(
 
   return {
     conflicting_courses: data.conflicting_courses || [],
-    courses: data.courses || [],
+    courses_with_clashes: data.courses_with_clashes || [],
     total_conflicts: data.total_conflicts || 0,
     unique_courses_with_conflicts: data.unique_courses_with_conflicts || 0,
     total_students_affected: data.total_students_affected || 0,
