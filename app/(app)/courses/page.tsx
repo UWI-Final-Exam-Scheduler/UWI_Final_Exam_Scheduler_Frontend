@@ -11,11 +11,10 @@ import CourseClashFilter, {
   ClashFilterValue,
 } from "@/app/components/ui/CourseClashFilter";
 import ClashMatrixSidebar from "@/app/components/ui/ClashMatrixSidebar";
-import { useClashMatrix } from "@/app/hooks/useClashMatrix";
+import { useCoursesWithClashes } from "@/app/hooks/useCoursesWithClashes";
 import { useCoursesPageFilters } from "@/app/hooks/useCoursesPageFilters";
 import { useCoursesThresholdPreferences } from "@/app/hooks/useCoursesThresholdPreferences";
-
-const normalizeCourseCode = (code: string) => code.trim().toUpperCase();
+import { courseHasClash } from "@/app/lib/courseClashes";
 
 export default function Courses() {
   const searchParams = useSearchParams();
@@ -66,8 +65,8 @@ export default function Courses() {
     uniqueClashCount,
     totalStudentsAffected,
     percentageStudentsAffected,
-    coursesWithClashes,
-  } = useClashMatrix(absForBackend, percentageThreshold);
+    courseClashesSet,
+  } = useCoursesWithClashes(absForBackend, percentageThreshold);
 
   const {
     selectedSubject,
@@ -81,7 +80,7 @@ export default function Courses() {
     handleCourseClick,
   } = useCoursesPageFilters({
     displayedCourses,
-    coursesWithClashes,
+    coursesWithClashes: courseClashesSet,
     page,
     setPage,
     handleFilterChange,
@@ -168,8 +167,9 @@ export default function Courses() {
         {!isLoading && !loadingClashes && filteredCourses.length !== 0 && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full">
             {filteredCourses.map((course: Course) => {
-              const hasClash = coursesWithClashes.has(
-                normalizeCourseCode(course.courseCode),
+              const hasClash = courseHasClash(
+                course.courseCode,
+                courseClashesSet,
               );
 
               return (

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getClashMatrix } from "@/app/lib/clashMatrixFetch";
+import { buildCourseClashesSet } from "@/app/lib/courseClashes";
 
 type ClashMatrixResult = {
   conflicting_courses: Array<{
@@ -7,17 +8,12 @@ type ClashMatrixResult = {
     course2: string;
     clash_count: number;
   }>;
-  courses: Array<{
-    course: string;
-    has_clash: boolean;
-  }>;
+  courses_with_clashes: string[];
   total_conflicts: number;
   unique_courses_with_conflicts: number;
   total_students_affected: number;
   percentage_students_affected: number;
 };
-
-const normalizeCourseCode = (code: string) => code.trim().toUpperCase();
 
 export function useClashMatrix(
   absoluteThreshold: number,
@@ -33,11 +29,8 @@ export function useClashMatrix(
       retry: false,
     });
 
-  // plan to use for highlighting individual courses with at least one clash in the courses list page
-  const coursesWithClashes = new Set(
-    (data?.courses ?? [])
-      .filter((c) => c.has_clash)
-      .map((c) => normalizeCourseCode(c.course)),
+  const coursesWithClashes = buildCourseClashesSet(
+    data?.courses_with_clashes ?? [],
   );
 
   return {
