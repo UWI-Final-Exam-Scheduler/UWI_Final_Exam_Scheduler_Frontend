@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { getClashMatrix } from "@/app/lib/clashMatrixFetch";
 import { buildCourseClashesSet } from "@/app/lib/courseClashes";
+import { useMemo } from "react";
+import { normalizeCourseCode } from "@/app/lib/courseClashes";
 
 type ClashMatrixResult = {
   conflicting_courses: Array<{
@@ -33,6 +35,19 @@ export function useClashMatrix(
     data?.courses_with_clashes ?? [],
   );
 
+  const clashPairsMap = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const { course1, course2 } of data?.conflicting_courses ?? []) {
+      const c1 = normalizeCourseCode(course1);
+      const c2 = normalizeCourseCode(course2);
+      if (!map.has(c1)) map.set(c1, new Set());
+      if (!map.has(c2)) map.set(c2, new Set());
+      map.get(c1)!.add(c2);
+      map.get(c2)!.add(c1);
+    }
+    return map;
+  }, [data]);
+
   return {
     loadingClashes: isLoading,
     clashError: isError
@@ -51,6 +66,7 @@ export function useClashMatrix(
         ? undefined
         : (data?.percentage_students_affected ?? 0),
     coursesWithClashes,
+    clashPairsMap,
     refetch,
   };
 }

@@ -14,6 +14,7 @@ export default function ExamDisplayer({
   isLoading,
   handleConfirmMove,
   handleCancelMove,
+  clashColorMap,
 }: ExamDisplayerProps) {
   const timeColumns = columns.filter((col) => col.id !== "0");
 
@@ -42,6 +43,7 @@ export default function ExamDisplayer({
               exams={(exams ?? []).filter(
                 (exam) => exam.timeColumnId === timecolumn.id,
               )}
+              clashColorMap={clashColorMap}
             />
           ))}
         </div>

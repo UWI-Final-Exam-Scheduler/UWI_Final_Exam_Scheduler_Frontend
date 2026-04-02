@@ -25,6 +25,7 @@ export type ExamDisplayerProps = {
   pendingMove: PendingMove | null;
   handleConfirmMove: () => void;
   handleCancelMove: () => void;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 };
 
 export type PendingMove = {

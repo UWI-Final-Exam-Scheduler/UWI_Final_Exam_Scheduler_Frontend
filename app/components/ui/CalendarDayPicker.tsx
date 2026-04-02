@@ -8,6 +8,8 @@ import CustomButton from "./CustomButton";
 import TimeColumn from "./TimeColumn";
 import { DndContext } from "@dnd-kit/core";
 import { useRefineCalendar } from "@/app/hooks/useRefineCalendar";
+import { useAdjacentDayExams } from "@/app/hooks/useAdjacentDayExams";
+import { useExamClashColors } from "@/app/hooks/useExamClashColors";
 
 type CalendarProps = {
   startMonth: Date;
@@ -35,6 +37,13 @@ export default function CalendarDayPicker({
     handleCancelMove,
     isLoading,
   } = useRefineCalendar(selected);
+
+  const { prevDayExams, nextDayExams } = useAdjacentDayExams(selected);
+  const clashColorMap = useExamClashColors(
+    exams ?? [],
+    prevDayExams,
+    nextDayExams,
+  );
 
   const rescheduleColumn = columns.find((col) => col.id === "0");
 
@@ -101,6 +110,7 @@ export default function CalendarDayPicker({
                 isLoading={isLoading}
                 handleConfirmMove={handleConfirmMove}
                 handleCancelMove={handleCancelMove}
+                clashColorMap={clashColorMap}
               />
             </div>
           )}

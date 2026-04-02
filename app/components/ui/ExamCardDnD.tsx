@@ -2,7 +2,13 @@ import { useDraggable } from "@dnd-kit/core";
 import { Exam } from "../types/calendarTypes";
 import { Card, Flex, Text } from "@radix-ui/themes";
 
-export default function ExamCardDnD({ exam }: { exam: Exam }) {
+export default function ExamCardDnD({
+  exam,
+  clashColor,
+}: {
+  exam: Exam;
+  clashColor?: "orange" | "hotpink";
+}) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: String(exam.id),
   });
@@ -13,8 +19,11 @@ export default function ExamCardDnD({ exam }: { exam: Exam }) {
 
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
-      {/* <CustomCard className="h-2">{exam.courseCode}</CustomCard> */}
-      <Card variant="surface" className="h-7">
+      <Card
+        variant="surface"
+        className="h-7"
+        style={clashColor ? { backgroundColor: clashColor } : undefined}
+      >
         <Flex align="center" justify="between">
           <Text size="1" weight="bold">
             {exam.courseCode}

@@ -10,10 +10,12 @@ function DroppableSlot({
   droppableId,
   label,
   exams,
+  clashColorMap,
 }: {
   droppableId: string;
   label?: string;
   exams: Exam[];
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -35,7 +37,13 @@ function DroppableSlot({
         {exams.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-2">Drop here</p>
         ) : (
-          exams.map((exam) => <ExamCardDnD key={exam.id} exam={exam} />)
+          exams.map((exam) => (
+            <ExamCardDnD
+              key={exam.id}
+              exam={exam}
+              clashColor={clashColorMap?.get(exam.id)}
+            />
+          ))
         )}
       </div>
     </div>
@@ -47,6 +55,7 @@ type TimeColumnProps = {
   exams: Exam[];
   venues?: Venue[];
   isLoading?: boolean;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 };
 
 export default function TimeColumn({
@@ -54,6 +63,7 @@ export default function TimeColumn({
   exams,
   venues = [],
   isLoading,
+  clashColorMap,
 }: TimeColumnProps) {
   const isReschedule = column.id === "0";
 
@@ -71,15 +81,20 @@ export default function TimeColumn({
           <Spinner />
         </div>
       ) : isReschedule || venues.length === 0 ? (
-        <DroppableSlot droppableId={column.id} exams={exams} />
+        <DroppableSlot
+          droppableId={column.id}
+          exams={exams}
+          clashColorMap={clashColorMap}
+        />
       ) : (
         <div className="flex flex-col gap-4">
           {venues.map((venue) => (
             <DroppableSlot
               key={`venue-${venue.name}`}
-              droppableId={`${column.id}-${venue.name}`}
+              droppableId={`${column.id}-${venue.id}`}
               label={venue.name}
               exams={exams.filter((e) => e.venue_id === venue.id)}
+              clashColorMap={clashColorMap}
             />
           ))}
         </div>
