@@ -32,7 +32,7 @@ export default function ExamContextMenu({
           {hasSplits && (
             <ContextMenu.Item
               onSelect={() => onMergeExam(exam)}
-              className="text-sm px-3 py-2 rounded cursor-pointer hover:bg-green-50 hover:text-green-700 outline-none select-none"
+              className="text-sm px-3 py-2 rounded cursor-pointer hover:bg-blue-50 hover:text-blue-700 outline-none select-none"
             >
               Merge Splits
             </ContextMenu.Item>

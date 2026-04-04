@@ -70,6 +70,7 @@ export default function SplitExamDialog({
             />
             {splits.length > 2 && (
               <button
+                type="button"
                 onClick={() =>
                   setSplits((prev) => prev.filter((_, idx) => idx !== i))
                 }
@@ -84,6 +85,7 @@ export default function SplitExamDialog({
 
       {splits.length < 4 && (
         <button
+          type="button"
           onClick={() =>
             setSplits((prev) => [...prev, { number_of_students: 0 }])
           }

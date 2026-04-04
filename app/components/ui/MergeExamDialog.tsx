@@ -46,7 +46,7 @@ export default function MergeExamDialog({
       title={`Merge ${exam.courseCode} Splits`}
       confirmLabel="Confirm Merge"
       confirmDisabled={selected.size < 2}
-      confirmColor="green"
+      confirmColor="blue"
       onConfirm={() => onConfirm([...selected])}
       onCancel={onCancel}
     >
@@ -70,7 +70,7 @@ export default function MergeExamDialog({
                   type="checkbox"
                   checked={selected.has(split.id)}
                   onChange={() => toggleSplit(split.id)}
-                  className="h-4 w-4 accent-green-500"
+                  className="h-4 w-4 accent-blue-500"
                 />
                 <span className="text-sm text-gray-700">
                   Venue ID {split.venue_id} — {split.number_of_students}{" "}
