@@ -36,7 +36,7 @@ export default function ExamCardDnD({
       <Card
         variant="surface"
         className="h-7"
-        style={clashColor ? { borderColor: clashColor } : undefined}
+        style={clashColor ? { backgroundColor: clashColor } : undefined}
       >
         <Flex align="center" justify="between">
           <Text size="1" weight="bold">
