@@ -3,17 +3,32 @@ import { formatDatetoString, rescheduleExam } from "../lib/examFetch";
 import { Dispatch, SetStateAction } from "react";
 
 export function useCalendarMove(
+  exams: Exam[],
   setExams: Dispatch<SetStateAction<Exam[]>>,
   setRescheduleExams: Dispatch<SetStateAction<Exam[]>>,
 ) {
   async function handleMoveToReschedule(move: PendingMove) {
     await rescheduleExam(move.exam.courseCode, 0, null, true);
 
-    setExams((prev) => prev.filter((e) => String(e.id) !== move.examId));
+    const courseCode = move.exam.courseCode;
 
+    const splits = exams.filter((e) => e.courseCode === courseCode);
+    const totalStudents = splits.reduce(
+      (sum, s) => sum + s.number_of_students,
+      0,
+    );
+
+    setExams((prev) =>
+      prev.filter((e) => e.courseCode !== move.exam.courseCode),
+    );
     setRescheduleExams((prev) => [
       ...prev,
-      { ...move.exam, timeColumnId: "0" },
+      {
+        ...move.exam,
+        timeColumnId: "0",
+        number_of_students: totalStudents,
+        venue_id: 0,
+      },
     ]);
   }
 
@@ -61,7 +76,6 @@ export function useCalendarMove(
       ),
     );
   }
-
   return {
     handleMoveToReschedule,
     handleMoveFromReschedule,

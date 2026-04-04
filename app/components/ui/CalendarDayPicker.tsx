@@ -13,6 +13,7 @@ type CalendarProps = {
   startMonth: Date;
   endMonth: Date;
 };
+
 export default function CalendarDayPicker({
   startMonth,
   endMonth,
@@ -34,6 +35,16 @@ export default function CalendarDayPicker({
     handleConfirmMove,
     handleCancelMove,
     isLoading,
+    activeExam,
+    examSplits,
+    splitDialogOpen,
+    mergeDialogOpen,
+    onSplit,
+    onMerge,
+    onSplitConfirm,
+    onMergeConfirm,
+    onCloseSplit,
+    onCloseMerge,
   } = useRefineCalendar(selected);
 
   const rescheduleColumn = columns.find((col) => col.id === "0");
@@ -101,6 +112,16 @@ export default function CalendarDayPicker({
                 isLoading={isLoading}
                 handleConfirmMove={handleConfirmMove}
                 handleCancelMove={handleCancelMove}
+                activeExam={activeExam}
+                examSplits={examSplits}
+                splitDialogOpen={splitDialogOpen}
+                mergeDialogOpen={mergeDialogOpen}
+                onSplitExam={onSplit}
+                onMergeExam={onMerge}
+                onSplitConfirm={onSplitConfirm}
+                onMergeConfirm={onMergeConfirm}
+                onCloseSplit={onCloseSplit}
+                onCloseMerge={onCloseMerge}
               />
             </div>
           )}
@@ -112,6 +133,8 @@ export default function CalendarDayPicker({
               column={rescheduleColumn}
               exams={rescheduleExams ?? []}
               isLoading={isLoading}
+              onSplitExam={onSplit}
+              onMergeExam={onMerge}
             />
           </aside>
         )}
