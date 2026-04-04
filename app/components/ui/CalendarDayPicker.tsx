@@ -133,8 +133,6 @@ export default function CalendarDayPicker({
               column={rescheduleColumn}
               exams={rescheduleExams ?? []}
               isLoading={isLoading}
-              onSplitExam={onSplit}
-              onMergeExam={onMerge}
             />
           </aside>
         )}

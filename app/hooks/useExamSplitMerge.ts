@@ -32,20 +32,28 @@ export function useExamSplitMerge(
 
   async function onSplitConfirm(splits: { number_of_students: number }[]) {
     if (!activeExam) return;
-    const newExams = await splitExam(activeExam.courseCode, splits);
-    setExams((prev) => [
-      ...prev.filter((e) => e.courseCode !== activeExam.courseCode),
-      ...newExams,
-    ]);
-    onCloseSplit();
+    try {
+      const newExams = await splitExam(activeExam.courseCode, splits);
+      setExams((prev) => [
+        ...prev.filter((e) => e.courseCode !== activeExam.courseCode),
+        ...newExams,
+      ]);
+      onCloseSplit();
+    } catch (error) {
+      console.error("Failed to split exam:", error);
+    }
   }
 
   async function onMergeConfirm(examIds: number[]) {
-    const merged = await mergeExam(examIds);
-    setExams((prev) => [
-      ...prev.filter((e) => !examIds.includes(e.id)),
-      merged,
-    ]);
+    try {
+      const merged = await mergeExam(examIds);
+      setExams((prev) => [
+        ...prev.filter((e) => !examIds.includes(e.id)),
+        ...merged,
+      ]);
+    } catch (error) {
+      console.error("Failed to merge exams:", error);
+    }
     onCloseMerge();
   }
 

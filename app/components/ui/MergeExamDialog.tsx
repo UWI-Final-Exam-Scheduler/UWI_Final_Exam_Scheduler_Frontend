@@ -19,15 +19,9 @@ export default function MergeExamDialog({
   onConfirm,
   onCancel,
 }: MergeDialogProps) {
-  const [selected, setSelected] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    if (!open) return;
-    const idSet = new Set(splits.map((s) => s.id));
-    const handle = setTimeout(() => setSelected(idSet), 0);
-
-    return () => clearTimeout(handle);
-  }, [open, splits]);
+  const [selected, setSelected] = useState<Set<number>>(
+    new Set(splits.map((s) => s.id)),
+  );
 
   if (!exam) return null;
 

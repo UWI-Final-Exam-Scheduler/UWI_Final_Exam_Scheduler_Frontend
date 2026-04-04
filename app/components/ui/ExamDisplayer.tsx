@@ -38,12 +38,19 @@ export default function ExamDisplayer({
         <ScheduleAlert
           open={alertOpen}
           title="Confirm Exam Move"
-          message={`Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}?`}
+          message={
+            pendingMove.toColumnId === "0" &&
+            exams.filter((e) => e.courseCode === pendingMove.exam.courseCode)
+              .length > 1
+              ? `Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}? This exam has multiple splits — all splits will be collapsed into one.`
+              : `Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}?`
+          }
           onConfirm={handleConfirmMove}
           onCancel={handleCancelMove}
         />
       )}
       <SplitExamDialog
+        key={activeExam?.courseCode}
         exam={activeExam}
         open={splitDialogOpen}
         onConfirm={onSplitConfirm}
@@ -51,6 +58,7 @@ export default function ExamDisplayer({
       />
 
       <MergeExamDialog
+        key={activeExam?.courseCode}
         exam={activeExam}
         splits={examSplits}
         open={mergeDialogOpen}

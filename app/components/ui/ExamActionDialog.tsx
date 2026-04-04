@@ -1,14 +1,15 @@
 "use client";
 
 import { Dialog } from "radix-ui";
+import { useState } from "react";
 
-type Props = {
+type ActionDialogProps = {
   open: boolean;
   title: string;
   confirmLabel: string;
   confirmDisabled: boolean;
   confirmColor?: "blue" | "green";
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
   children: React.ReactNode;
 };
@@ -22,7 +23,17 @@ export default function ExamActionDialog({
   onConfirm,
   onCancel,
   children,
-}: Props) {
+}: ActionDialogProps) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleConfirm() {
+    setLoading(true);
+    try {
+      await onConfirm();
+    } finally {
+      setLoading(false);
+    }
+  }
   const confirmCls =
     confirmColor === "green"
       ? "bg-green-500 hover:bg-green-600"
@@ -45,11 +56,11 @@ export default function ExamActionDialog({
               Cancel
             </button>
             <button
-              onClick={onConfirm}
-              disabled={confirmDisabled}
+              onClick={handleConfirm}
+              disabled={confirmDisabled || loading}
               className={`rounded-lg px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-40 ${confirmCls}`}
             >
-              {confirmLabel}
+              {loading ? "Processing…" : confirmLabel}
             </button>
           </div>
         </Dialog.Content>
