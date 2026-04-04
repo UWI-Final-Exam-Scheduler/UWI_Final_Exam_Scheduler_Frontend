@@ -5,6 +5,8 @@ import CustomButton from "../components/ui/CustomButton";
 import CustomTextField from "../components/ui/CustomTextField";
 import LoginCard from "../components/ui/LoginCard";
 import { Spinner } from "@radix-ui/themes";
+import toast from "react-hot-toast";
+import { addLog } from "../lib/activityLog";
 
 type FieldErrors = {
   username?: string;
@@ -54,7 +56,16 @@ export default function Login() {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        window.location.href = "/dashboard";
+        addLog({
+          action: "User Login",
+          entityId: username,
+        });
+
+        toast.success("Welcome Back 👋");
+
+        setTimeout(() => { // Sets small timeout so Notification can be seen
+          window.location.href = "/dashboard";
+        }, 800);
       } else {
         console.error("Login failed:", data);
         setError(data.error || data.message || "Login failed");
