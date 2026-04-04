@@ -13,6 +13,7 @@ function DroppableSlot({
   allExams,
   onSplitExam,
   onMergeExam,
+  clashColorMap,
 }: {
   droppableId: string;
   label?: string;
@@ -21,6 +22,7 @@ function DroppableSlot({
   isReschedule: boolean;
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -50,6 +52,7 @@ function DroppableSlot({
               isReschedule={isReschedule}
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
+              clashColor={clashColorMap?.get(exam.id)} //
             />
           ))
         )}
@@ -66,6 +69,7 @@ type TimeColumnProps = {
   onMergeExam?: (exam: Exam) => void;
   venues?: Venue[];
   isLoading?: boolean;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 };
 
 export default function TimeColumn({
@@ -76,6 +80,7 @@ export default function TimeColumn({
   onMergeExam,
   venues = [],
   isLoading,
+  clashColorMap,
 }: TimeColumnProps) {
   const isReschedule = column.id === "0";
 
@@ -100,6 +105,7 @@ export default function TimeColumn({
           isReschedule={isReschedule}
           onSplitExam={onSplitExam}
           onMergeExam={onMergeExam}
+          clashColorMap={clashColorMap}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -113,6 +119,7 @@ export default function TimeColumn({
               isReschedule={false}
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
+              clashColorMap={clashColorMap}
             />
           ))}
         </div>
