@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Column as ColumnType, Exam, Venue } from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
@@ -10,10 +9,18 @@ function DroppableSlot({
   droppableId,
   label,
   exams,
+  isReschedule,
+  allExams,
+  onSplitExam,
+  onMergeExam,
 }: {
   droppableId: string;
   label?: string;
   exams: Exam[];
+  allExams?: Exam[];
+  isReschedule: boolean;
+  onSplitExam?: (exam: Exam) => void;
+  onMergeExam?: (exam: Exam) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -35,7 +42,16 @@ function DroppableSlot({
         {exams.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-2">Drop here</p>
         ) : (
-          exams.map((exam) => <ExamCardDnD key={exam.id} exam={exam} />)
+          exams.map((exam) => (
+            <ExamCardDnD
+              key={exam.id}
+              exam={exam}
+              allExams={allExams}
+              isReschedule={isReschedule}
+              onSplitExam={onSplitExam}
+              onMergeExam={onMergeExam}
+            />
+          ))
         )}
       </div>
     </div>
@@ -45,6 +61,9 @@ function DroppableSlot({
 type TimeColumnProps = {
   column: ColumnType;
   exams: Exam[];
+  allExams?: Exam[];
+  onSplitExam?: (exam: Exam) => void;
+  onMergeExam?: (exam: Exam) => void;
   venues?: Venue[];
   isLoading?: boolean;
 };
@@ -52,6 +71,9 @@ type TimeColumnProps = {
 export default function TimeColumn({
   column,
   exams,
+  allExams = [],
+  onSplitExam,
+  onMergeExam,
   venues = [],
   isLoading,
 }: TimeColumnProps) {
@@ -71,15 +93,26 @@ export default function TimeColumn({
           <Spinner />
         </div>
       ) : isReschedule || venues.length === 0 ? (
-        <DroppableSlot droppableId={column.id} exams={exams} />
+        <DroppableSlot
+          droppableId={column.id}
+          exams={exams}
+          allExams={allExams}
+          isReschedule={isReschedule}
+          onSplitExam={onSplitExam}
+          onMergeExam={onMergeExam}
+        />
       ) : (
         <div className="flex flex-col gap-4">
           {venues.map((venue) => (
             <DroppableSlot
-              key={`venue-${venue.name}`}
-              droppableId={`${column.id}-${venue.name}`}
+              key={`venue-${venue.id}`}
+              droppableId={`${column.id}-${venue.id}`}
               label={venue.name}
+              allExams={allExams}
               exams={exams.filter((e) => e.venue_id === venue.id)}
+              isReschedule={false}
+              onSplitExam={onSplitExam}
+              onMergeExam={onMergeExam}
             />
           ))}
         </div>
