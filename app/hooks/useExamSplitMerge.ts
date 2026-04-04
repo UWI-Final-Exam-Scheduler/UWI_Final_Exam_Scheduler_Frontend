@@ -33,10 +33,24 @@ export function useExamSplitMerge(
   async function onSplitConfirm(splits: { number_of_students: number }[]) {
     if (!activeExam) return;
     try {
-      const newExams = await splitExam(activeExam.courseCode, splits);
+      const newExams = await splitExam(
+        activeExam.courseCode,
+        splits,
+        activeExam.venue_id ?? undefined,
+        activeExam.time ?? undefined,
+        activeExam.date ?? undefined,
+      );
+      const inheritedExams = newExams.map((exam: Exam) => ({
+        ...exam,
+        venue_id: activeExam.venue_id,
+        time: activeExam.time,
+        timeColumnId: String(activeExam.time),
+        date: activeExam.date,
+        exam_date: activeExam.exam_date,
+      }));
       setExams((prev) => [
         ...prev.filter((e) => e.courseCode !== activeExam.courseCode),
-        ...newExams,
+        ...inheritedExams,
       ]);
       onCloseSplit();
     } catch (error) {

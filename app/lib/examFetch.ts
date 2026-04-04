@@ -65,10 +65,13 @@ export function formatStringtoDate(dateStr: string) {
 export async function splitExam(
   courseCode: string,
   splits: { number_of_students: number }[],
+  venueId?: number,
+  time?: number | null,
+  date?: string | null,
 ) {
   const response = await apiFetch(`/api/exams/split`, {
     method: "POST",
-    body: JSON.stringify({ courseCode, splits }),
+    body: JSON.stringify({ courseCode, splits, venueId, time, date }),
   });
 
   if (!response.ok) throw new Error("Failed to split exam");
