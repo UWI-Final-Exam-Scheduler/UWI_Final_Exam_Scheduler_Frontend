@@ -25,7 +25,20 @@ export type ExamDisplayerProps = {
   pendingMove: PendingMove | null;
   handleConfirmMove: () => void;
   handleCancelMove: () => void;
+<<<<<<< HEAD
   clashColorMap?: Map<number, "orange" | "hotpink">;
+=======
+  activeExam: Exam | null;
+  examSplits: Exam[];
+  splitDialogOpen: boolean;
+  mergeDialogOpen: boolean;
+  onSplitExam: (exam: Exam) => void;
+  onMergeExam: (exam: Exam) => void;
+  onSplitConfirm: (splits: { number_of_students: number }[]) => Promise<void>;
+  onMergeConfirm: (examIds: number[]) => Promise<void>;
+  onCloseSplit: () => void;
+  onCloseMerge: () => void;
+>>>>>>> origin/main
 };
 
 export type PendingMove = {

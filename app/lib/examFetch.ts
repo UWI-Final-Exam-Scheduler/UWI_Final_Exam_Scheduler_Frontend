@@ -61,3 +61,36 @@ export function formatStringtoDate(dateStr: string) {
   const [year, month, day] = dateStr.split("-").map(Number);
   return new Date(year, month - 1, day);
 }
+
+export async function splitExam(
+  courseCode: string,
+  splits: { number_of_students: number }[],
+  venueId?: number,
+  time?: number | null,
+  date?: string | null,
+) {
+  const response = await apiFetch(`/api/exams/split`, {
+    method: "POST",
+    body: JSON.stringify({ courseCode, splits, venueId, time, date }),
+  });
+
+  if (!response.ok) throw new Error("Failed to split exam");
+  const data = await response.json();
+  return (data ?? []).map((exam: Exam) => ({
+    ...exam,
+    timeColumnId: String(exam.time),
+  }));
+}
+
+export async function mergeExam(examIds: number[]) {
+  const response = await apiFetch(`/api/exams/merge`, {
+    method: "POST",
+    body: JSON.stringify({ examIds }),
+  });
+  if (!response.ok) throw new Error("Failed to merge exams");
+  const data = await response.json();
+  return (data ?? []).map((exam: Exam) => ({
+    ...exam,
+    timeColumnId: String(exam.time),
+  }));
+}

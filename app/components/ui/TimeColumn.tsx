@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Column as ColumnType, Exam, Venue } from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
@@ -10,12 +9,26 @@ function DroppableSlot({
   droppableId,
   label,
   exams,
+<<<<<<< HEAD
   clashColorMap,
+=======
+  isReschedule,
+  allExams,
+  onSplitExam,
+  onMergeExam,
+>>>>>>> origin/main
 }: {
   droppableId: string;
   label?: string;
   exams: Exam[];
+<<<<<<< HEAD
   clashColorMap?: Map<number, "orange" | "hotpink">;
+=======
+  allExams?: Exam[];
+  isReschedule: boolean;
+  onSplitExam?: (exam: Exam) => void;
+  onMergeExam?: (exam: Exam) => void;
+>>>>>>> origin/main
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -41,7 +54,14 @@ function DroppableSlot({
             <ExamCardDnD
               key={exam.id}
               exam={exam}
+<<<<<<< HEAD
               clashColor={clashColorMap?.get(exam.id)}
+=======
+              allExams={allExams}
+              isReschedule={isReschedule}
+              onSplitExam={onSplitExam}
+              onMergeExam={onMergeExam}
+>>>>>>> origin/main
             />
           ))
         )}
@@ -53,6 +73,9 @@ function DroppableSlot({
 type TimeColumnProps = {
   column: ColumnType;
   exams: Exam[];
+  allExams?: Exam[];
+  onSplitExam?: (exam: Exam) => void;
+  onMergeExam?: (exam: Exam) => void;
   venues?: Venue[];
   isLoading?: boolean;
   clashColorMap?: Map<number, "orange" | "hotpink">;
@@ -61,6 +84,9 @@ type TimeColumnProps = {
 export default function TimeColumn({
   column,
   exams,
+  allExams = [],
+  onSplitExam,
+  onMergeExam,
   venues = [],
   isLoading,
   clashColorMap,
@@ -84,17 +110,35 @@ export default function TimeColumn({
         <DroppableSlot
           droppableId={column.id}
           exams={exams}
+<<<<<<< HEAD
           clashColorMap={clashColorMap}
+=======
+          allExams={allExams}
+          isReschedule={isReschedule}
+          onSplitExam={onSplitExam}
+          onMergeExam={onMergeExam}
+>>>>>>> origin/main
         />
       ) : (
         <div className="flex flex-col gap-4">
           {venues.map((venue) => (
             <DroppableSlot
+<<<<<<< HEAD
               key={`venue-${venue.name}`}
+=======
+              key={`venue-${venue.id}`}
+>>>>>>> origin/main
               droppableId={`${column.id}-${venue.id}`}
               label={venue.name}
+              allExams={allExams}
               exams={exams.filter((e) => e.venue_id === venue.id)}
+<<<<<<< HEAD
               clashColorMap={clashColorMap}
+=======
+              isReschedule={false}
+              onSplitExam={onSplitExam}
+              onMergeExam={onMergeExam}
+>>>>>>> origin/main
             />
           ))}
         </div>

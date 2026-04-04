@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { Exam } from "../types/calendarTypes";
 import { Card, Flex, Text } from "@radix-ui/themes";
+import ExamActionMenu from "./ExamActionsMenu";
 
 export default function ExamCardDnD({
   exam,
@@ -17,7 +18,10 @@ export default function ExamCardDnD({
     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
     : undefined;
 
-  return (
+  const hasSplits =
+    allExams.filter((e) => e.courseCode === exam.courseCode).length > 1;
+
+  const card = (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
       <Card
         variant="surface"
@@ -34,5 +38,18 @@ export default function ExamCardDnD({
         </Flex>
       </Card>
     </div>
+  );
+
+  if (isReschedule) return card;
+
+  return (
+    <ExamActionMenu
+      exam={exam}
+      hasSplits={hasSplits}
+      onSplitExam={() => onSplitExam?.(exam)}
+      onMergeExam={() => onMergeExam?.(exam)}
+    >
+      {card}
+    </ExamActionMenu>
   );
 }

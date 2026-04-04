@@ -15,6 +15,7 @@ type CalendarProps = {
   startMonth: Date;
   endMonth: Date;
 };
+
 export default function CalendarDayPicker({
   startMonth,
   endMonth,
@@ -36,6 +37,16 @@ export default function CalendarDayPicker({
     handleConfirmMove,
     handleCancelMove,
     isLoading,
+    activeExam,
+    examSplits,
+    splitDialogOpen,
+    mergeDialogOpen,
+    onSplit,
+    onMerge,
+    onSplitConfirm,
+    onMergeConfirm,
+    onCloseSplit,
+    onCloseMerge,
   } = useRefineCalendar(selected);
 
   const { prevDayExams, nextDayExams } = useAdjacentDayExams(selected);
@@ -110,7 +121,20 @@ export default function CalendarDayPicker({
                 isLoading={isLoading}
                 handleConfirmMove={handleConfirmMove}
                 handleCancelMove={handleCancelMove}
+<<<<<<< HEAD
                 clashColorMap={clashColorMap}
+=======
+                activeExam={activeExam}
+                examSplits={examSplits}
+                splitDialogOpen={splitDialogOpen}
+                mergeDialogOpen={mergeDialogOpen}
+                onSplitExam={onSplit}
+                onMergeExam={onMerge}
+                onSplitConfirm={onSplitConfirm}
+                onMergeConfirm={onMergeConfirm}
+                onCloseSplit={onCloseSplit}
+                onCloseMerge={onCloseMerge}
+>>>>>>> origin/main
               />
             </div>
           )}
