@@ -1,7 +1,12 @@
 "use client";
 
 import { getCapacityStatus } from "@/app/lib/capacityUtils";
-import { Column as ColumnType, Exam, Venue } from "../types/calendarTypes";
+import {
+  ClashDetail,
+  Column as ColumnType,
+  Exam,
+  Venue,
+} from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
 import { Spinner } from "@radix-ui/themes";
@@ -16,6 +21,7 @@ function DroppableSlot({
   onMergeExam,
   clashColorMap,
   venueCapacity,
+  clashExamsMap,
 }: {
   droppableId: string;
   label?: string;
@@ -26,6 +32,7 @@ function DroppableSlot({
   onMergeExam?: (exam: Exam) => void;
   clashColorMap?: Map<number, "orange" | "hotpink">;
   venueCapacity?: number;
+  clashExamsMap?: Map<number, ClashDetail>;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -70,6 +77,7 @@ function DroppableSlot({
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
               clashColor={clashColorMap?.get(exam.id)} //
+              clashDetail={clashExamsMap?.get(exam.id)}
             />
           ))
         )}
@@ -87,6 +95,7 @@ type TimeColumnProps = {
   venues?: Venue[];
   isLoading?: boolean;
   clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashExamsMap?: Map<number, ClashDetail>;
 };
 
 export default function TimeColumn({
@@ -98,6 +107,7 @@ export default function TimeColumn({
   venues = [],
   isLoading,
   clashColorMap,
+  clashExamsMap,
 }: TimeColumnProps) {
   const isReschedule = column.id === "0";
 
@@ -123,6 +133,7 @@ export default function TimeColumn({
           onSplitExam={onSplitExam}
           onMergeExam={onMergeExam}
           clashColorMap={clashColorMap}
+          clashExamsMap={clashExamsMap}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -138,6 +149,7 @@ export default function TimeColumn({
               onMergeExam={onMergeExam}
               clashColorMap={clashColorMap}
               venueCapacity={venue.capacity}
+              clashExamsMap={clashExamsMap}
             />
           ))}
         </div>
