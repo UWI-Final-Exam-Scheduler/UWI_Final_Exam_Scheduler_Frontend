@@ -27,6 +27,7 @@ export default function ExamDisplayer({
   onCloseSplit,
   onCloseMerge,
   clashColorMap,
+  clashExamsMap,
 }: ExamDisplayerProps) {
   const timeColumns = columns.filter((col) => col.id !== "0");
 
@@ -85,6 +86,7 @@ export default function ExamDisplayer({
                 (exam) => exam.timeColumnId === timecolumn.id,
               )}
               clashColorMap={clashColorMap} //
+              clashExamsMap={clashExamsMap} // pass down clash details for hover cards
             />
           ))}
         </div>

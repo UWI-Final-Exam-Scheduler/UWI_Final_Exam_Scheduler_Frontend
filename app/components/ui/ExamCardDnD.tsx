@@ -1,7 +1,8 @@
 import { useDraggable } from "@dnd-kit/core";
-import { Exam } from "../types/calendarTypes";
+import { Exam, ClashDetail } from "../types/calendarTypes";
 import { Card, Flex, Text } from "@radix-ui/themes";
 import ExamActionMenu from "./ExamActionsMenu";
+import ExamHoverCard from "./ExamHoverCard";
 
 type ExamCardProps = {
   exam: Exam;
@@ -10,6 +11,7 @@ type ExamCardProps = {
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
   clashColor?: "orange" | "hotpink";
+  clashDetail?: ClashDetail;
 };
 
 export default function ExamCardDnD({
@@ -19,6 +21,7 @@ export default function ExamCardDnD({
   onSplitExam,
   onMergeExam,
   clashColor,
+  clashDetail,
 }: ExamCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: String(exam.id),
@@ -50,7 +53,15 @@ export default function ExamCardDnD({
     </div>
   );
 
-  if (isReschedule) return card;
+  if (isReschedule) return card; // no hover card or action menu during rescheduling
+
+  const cardWithHover = clashDetail ? (
+    <ExamHoverCard clash={clashDetail.clash} examClashes={clashDetail.exams}>
+      {card}
+    </ExamHoverCard>
+  ) : (
+    card
+  );
 
   return (
     <ExamActionMenu
@@ -59,7 +70,7 @@ export default function ExamCardDnD({
       onSplitExam={() => onSplitExam?.(exam)}
       onMergeExam={() => onMergeExam?.(exam)}
     >
-      {card}
+      {cardWithHover}
     </ExamActionMenu>
   );
 }

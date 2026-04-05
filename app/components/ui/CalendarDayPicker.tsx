@@ -56,10 +56,8 @@ export default function CalendarDayPicker({
   // Fetch exams on day before and day after selected date
   const { prevDayExams, nextDayExams } = useAdjacentDayExams(selected); // new
 
-  // Compute clash color per exam.id
-  const clashColorMap = useExamClashColors(
-    // new
-    exams ?? [],
+  const { colorMap, clashExamsMap } = useExamClashColors(
+    exams,
     prevDayExams,
     nextDayExams,
   );
@@ -150,7 +148,8 @@ export default function CalendarDayPicker({
                 onMergeConfirm={onMergeConfirm}
                 onCloseSplit={onCloseSplit}
                 onCloseMerge={onCloseMerge}
-                clashColorMap={clashColorMap} //
+                clashColorMap={colorMap} //
+                clashExamsMap={clashExamsMap}
               />
             </div>
           )}
@@ -162,6 +161,8 @@ export default function CalendarDayPicker({
               column={rescheduleColumn}
               exams={rescheduleExams ?? []}
               isLoading={isLoading}
+              clashColorMap={colorMap}
+              clashExamsMap={clashExamsMap}
             />
           </aside>
         )}

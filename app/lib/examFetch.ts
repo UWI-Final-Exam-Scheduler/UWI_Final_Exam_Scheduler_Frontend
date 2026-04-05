@@ -26,14 +26,15 @@ export async function fetchExamstobeRescheduled() {
 }
 
 export async function rescheduleExam( //have to add venue
-  courseCode: string,
+  examId: number,
   time: number,
   date?: string | null,
+  venueId?: number | null,
   unschedule = false,
 ) {
   const response = await apiFetch(`/api/exams/reschedule`, {
     method: "PATCH",
-    body: JSON.stringify({ courseCode, time, date, unschedule }),
+    body: JSON.stringify({ examId, time, date, venueId, unschedule }),
   });
   if (!response.ok) {
     const body = await response.text();

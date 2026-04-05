@@ -1,8 +1,8 @@
 import { Exam, PendingMove } from "../components/types/calendarTypes";
 import { formatDatetoString, rescheduleExam } from "../lib/examFetch";
 import { Dispatch, SetStateAction } from "react";
-import toast from "react-hot-toast"
-import { addLog } from "@/app/lib/activityLog"
+import toast from "react-hot-toast";
+import { addLog } from "@/app/lib/activityLog";
 
 export function useCalendarMove(
   exams: Exam[],
@@ -10,9 +10,9 @@ export function useCalendarMove(
   setRescheduleExams: Dispatch<SetStateAction<Exam[]>>,
 ) {
   async function handleMoveToReschedule(move: PendingMove) {
-    const originalExam = exams.find(e => String(e.id) === move.examId);
-    
-    await rescheduleExam(move.exam.courseCode, 0, null, true);
+    const originalExam = exams.find((e) => String(e.id) === move.examId);
+
+    await rescheduleExam(move.exam.id, 0, null, null, true);
 
     const courseCode = move.exam.courseCode;
 
@@ -52,9 +52,11 @@ export function useCalendarMove(
     const newDateStr = formatDatetoString(currentDate);
 
     await rescheduleExam(
-      move.exam.courseCode,
+      move.exam.id,
       Number(move.toColumnId),
       newDateStr,
+      move.toVenueId,
+      false,
     );
 
     setRescheduleExams((prev) =>
@@ -79,11 +81,17 @@ export function useCalendarMove(
       newValue: `Time: ${move.toColumnId}, Date: ${newDateStr}, Venue: ${move.toVenueId}`,
     });
 
-    toast.success("Exam Rescheduled ✅")
+    toast.success("Exam Rescheduled ✅");
   }
 
   async function handleSameDayTimeChange(move: PendingMove) {
-    await rescheduleExam(move.exam.courseCode, Number(move.toColumnId));
+    await rescheduleExam(
+      move.exam.id,
+      Number(move.toColumnId),
+      undefined,
+      move.toVenueId ?? null,
+      false,
+    );
 
     setExams((prev) =>
       prev.map((exam) =>

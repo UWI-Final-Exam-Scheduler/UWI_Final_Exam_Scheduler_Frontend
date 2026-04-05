@@ -15,6 +15,11 @@ export type Exam = {
   number_of_students: number;
 };
 
+export type ClashDetail = {
+  clash: "sameday" | "adjacent";
+  exams: Exam[];
+};
+
 export type ExamDisplayerProps = {
   exams: Exam[];
   columns: Column[];
@@ -36,6 +41,7 @@ export type ExamDisplayerProps = {
   onCloseSplit: () => void;
   onCloseMerge: () => void;
   clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashExamsMap?: Map<number, ClashDetail>;
 };
 
 export type PendingMove = {
