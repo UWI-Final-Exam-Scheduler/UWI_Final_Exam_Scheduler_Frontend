@@ -1,5 +1,6 @@
 "use client";
 
+import { getCapacityStatus } from "@/app/lib/capacityUtils";
 import { Column as ColumnType, Exam, Venue } from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
@@ -37,19 +38,12 @@ function DroppableSlot({
           </span>
           {venueCapacity != null &&
             (() => {
-              const occupied = exams.reduce(
-                (sum, e) => sum + e.number_of_students,
-                0,
+              const { occupied, colorClass } = getCapacityStatus(
+                exams,
+                venueCapacity,
               );
-              const pct = venueCapacity > 0 ? occupied / venueCapacity : 0;
-              const cls =
-                pct >= 1
-                  ? "text-red-600"
-                  : pct >= 0.8
-                    ? "text-orange-500"
-                    : "text-green-600";
               return (
-                <span className={`text-xs font-normal ${cls}`}>
+                <span className={`text-xs font-normal ${colorClass}`}>
                   {occupied}/{venueCapacity} students
                 </span>
               );
