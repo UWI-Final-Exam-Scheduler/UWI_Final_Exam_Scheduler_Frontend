@@ -14,6 +14,7 @@ function DroppableSlot({
   onSplitExam,
   onMergeExam,
   clashColorMap,
+  venueCapacity,
 }: {
   droppableId: string;
   label?: string;
@@ -23,15 +24,37 @@ function DroppableSlot({
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
   clashColorMap?: Map<number, "orange" | "hotpink">;
+  venueCapacity?: number;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <span className="text-xs font-semibold text-gray-700 truncate px-1">
-          {label}
-        </span>
+        <div className="flex flex-col px-1">
+          <span className="text-xs font-semibold text-gray-700 truncate">
+            {label}
+          </span>
+          {venueCapacity != null &&
+            (() => {
+              const occupied = exams.reduce(
+                (sum, e) => sum + e.number_of_students,
+                0,
+              );
+              const pct = venueCapacity > 0 ? occupied / venueCapacity : 0;
+              const cls =
+                pct >= 1
+                  ? "text-red-600"
+                  : pct >= 0.8
+                    ? "text-orange-500"
+                    : "text-green-600";
+              return (
+                <span className={`text-xs font-normal ${cls}`}>
+                  {occupied}/{venueCapacity} students
+                </span>
+              );
+            })()}
+        </div>
       )}
       <div
         ref={setNodeRef}
@@ -120,6 +143,7 @@ export default function TimeColumn({
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
               clashColorMap={clashColorMap}
+              venueCapacity={venue.capacity}
             />
           ))}
         </div>
