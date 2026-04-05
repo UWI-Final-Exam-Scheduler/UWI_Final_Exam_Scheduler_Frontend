@@ -61,6 +61,8 @@ export default function Login() {
           entityId: username,
         });
 
+        localStorage.setItem("username", username);
+
         toast.success("Welcome Back 👋");
 
         setTimeout(() => { // Sets small timeout so Notification can be seen

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import type { FileRejection } from "react-dropzone";
+import toast from "react-hot-toast";
+import { addLog } from "@/app/lib/activityLog"
 
 export default function DragAndDropUploader() {
   const [uploading, setUploading] = useState(false);
@@ -30,6 +32,13 @@ export default function DragAndDropUploader() {
       if (!res.ok) {
         throw new Error(data.error || "Upload Failed");
       }
+
+      addLog({
+        action: "File Upload",
+        entityId: file.name,
+      });
+
+      toast.success(`${file.name} uploaded successfully 📁`)
 
       setMessage(`${data.message}`);
     } catch (err: unknown) {
