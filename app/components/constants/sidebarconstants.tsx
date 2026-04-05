@@ -18,4 +18,8 @@ export const SIDEBAR_LINKS: SideBarItem[] = [
     title: "Upload",
     href: "/upload",
   },
+  {
+    title: "Activity Log",
+    href: "/activityLog",
+  }
 ];

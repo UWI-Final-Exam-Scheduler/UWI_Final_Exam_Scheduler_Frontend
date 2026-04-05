@@ -1,6 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import CustomButton from "./CustomButton";
+import toast from "react-hot-toast";
+import { addLog } from "@/app/lib/activityLog"
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -18,8 +20,21 @@ export default function LogoutButton() {
       });
 
       if (res.ok) {
-        router.push("/");
-        router.refresh();
+        const username = localStorage.getItem("username") || "Unknown User";
+
+        addLog({
+          action: "User Logout",
+          entityId: username, 
+        })
+
+        localStorage.removeItem("username");
+
+        toast.success("Logged out successfully 👋");
+
+        setTimeout(() => {
+          router.push("/");
+          router.refresh();
+        }, 800);
       } else {
         console.error("Logout failed");
       }

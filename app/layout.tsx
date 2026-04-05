@@ -4,6 +4,7 @@ import "./globals.css";
 import "@radix-ui/themes/styles.css";
 import { Theme } from "@radix-ui/themes";
 import Providers from "./providers";
+import GlobalToaster from "./components/ui/GlobalToaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,9 @@ export default function RootLayout({
         <Providers>
           <Theme accentColor="blue" grayColor="gray">
             {children}
+
+            <GlobalToaster/>
+
             <footer className="bg-blue-500 p-4 text-white">
               © 2026 Exam Scheduler
             </footer>
