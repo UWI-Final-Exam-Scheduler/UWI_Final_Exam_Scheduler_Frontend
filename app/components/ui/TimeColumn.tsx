@@ -1,5 +1,6 @@
 "use client";
 
+import { getCapacityStatus } from "@/app/lib/capacityUtils";
 import { Column as ColumnType, Exam, Venue } from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
@@ -13,6 +14,8 @@ function DroppableSlot({
   allExams,
   onSplitExam,
   onMergeExam,
+  clashColorMap,
+  venueCapacity,
 }: {
   droppableId: string;
   label?: string;
@@ -21,15 +24,31 @@ function DroppableSlot({
   isReschedule: boolean;
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
+  venueCapacity?: number;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <span className="text-xs font-semibold text-gray-700 truncate px-1">
-          {label}
-        </span>
+        <div className="flex flex-col px-1">
+          <span className="text-xs font-semibold text-gray-700 truncate">
+            {label}
+          </span>
+          {venueCapacity != null &&
+            (() => {
+              const { occupied, colorClass } = getCapacityStatus(
+                exams,
+                venueCapacity,
+              );
+              return (
+                <span className={`text-xs font-normal ${colorClass}`}>
+                  {occupied}/{venueCapacity} students
+                </span>
+              );
+            })()}
+        </div>
       )}
       <div
         ref={setNodeRef}
@@ -50,6 +69,7 @@ function DroppableSlot({
               isReschedule={isReschedule}
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
+              clashColor={clashColorMap?.get(exam.id)} //
             />
           ))
         )}
@@ -66,6 +86,7 @@ type TimeColumnProps = {
   onMergeExam?: (exam: Exam) => void;
   venues?: Venue[];
   isLoading?: boolean;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 };
 
 export default function TimeColumn({
@@ -76,6 +97,7 @@ export default function TimeColumn({
   onMergeExam,
   venues = [],
   isLoading,
+  clashColorMap,
 }: TimeColumnProps) {
   const isReschedule = column.id === "0";
 
@@ -100,6 +122,7 @@ export default function TimeColumn({
           isReschedule={isReschedule}
           onSplitExam={onSplitExam}
           onMergeExam={onMergeExam}
+          clashColorMap={clashColorMap}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -113,6 +136,8 @@ export default function TimeColumn({
               isReschedule={false}
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
+              clashColorMap={clashColorMap}
+              venueCapacity={venue.capacity}
             />
           ))}
         </div>

@@ -3,6 +3,7 @@ import { useCalendarExamFetch } from "./useCalendarExamFetch";
 import { useCalendarMove } from "./useCalendarMove";
 import { useCalendarExamDrag } from "./useCalendarExamDrag";
 import { useExamSplitMerge } from "./useExamSplitMerge";
+import { useCapacityFlag } from "./useCapacityFlag";
 
 export function useRefineCalendar(date: Date | undefined) {
   const fetchState = useCalendarExamFetch(date);
@@ -13,6 +14,11 @@ export function useRefineCalendar(date: Date | undefined) {
     fetchState.setRescheduleExams,
   );
 
+  const { occupancyMap, wouldExceedCapacity } = useCapacityFlag(
+    fetchState.exams,
+    fetchState.venues,
+  );
+
   const dragState = useCalendarExamDrag(
     fetchState.exams,
     fetchState.rescheduleExams,
@@ -20,6 +26,8 @@ export function useRefineCalendar(date: Date | undefined) {
     fetchState.fetchDaysWithExams,
     moveActions,
     fetchState.venues,
+    wouldExceedCapacity,
+    occupancyMap,
   );
 
   const splitMerge = useExamSplitMerge(fetchState.exams, fetchState.setExams);

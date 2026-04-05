@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ExamActionDialog from "./ExamActionDialog";
 import { Exam } from "../types/calendarTypes";
+import { useSplitAllocation } from "@/app/hooks/useSplitAllocation";
 
 type SplitEntry = { number_of_students: number };
 
@@ -24,12 +25,10 @@ export default function SplitExamDialog({
     { number_of_students: 0 },
   ]);
 
-  if (!exam) return null;
+  const total = exam?.number_of_students ?? 0;
+  const { allocated, remaining, isValid } = useSplitAllocation(splits, total);
 
-  const total = exam.number_of_students;
-  const allocated = splits.reduce((sum, s) => sum + s.number_of_students, 0);
-  const isValid =
-    allocated === total && splits.every((s) => s.number_of_students > 0);
+  if (!exam) return null;
 
   function updateSplit(i: number, value: number) {
     setSplits((prev) =>
@@ -48,8 +47,8 @@ export default function SplitExamDialog({
     >
       <p className="mb-3 text-sm text-gray-500">
         Total: <strong>{total}</strong> — Remaining:{" "}
-        <strong className={total - allocated < 0 ? "text-red-500" : ""}>
-          {total - allocated}
+        <strong className={remaining < 0 ? "text-red-500" : ""}>
+          {remaining}
         </strong>
       </p>
 

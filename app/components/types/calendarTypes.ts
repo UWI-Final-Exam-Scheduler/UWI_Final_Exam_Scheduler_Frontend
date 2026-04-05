@@ -35,6 +35,7 @@ export type ExamDisplayerProps = {
   onMergeConfirm: (examIds: number[]) => Promise<void>;
   onCloseSplit: () => void;
   onCloseMerge: () => void;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 };
 
 export type PendingMove = {

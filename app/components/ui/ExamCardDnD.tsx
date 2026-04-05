@@ -9,6 +9,7 @@ type ExamCardProps = {
   isReschedule?: boolean;
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
+  clashColor?: "orange" | "hotpink";
 };
 
 export default function ExamCardDnD({
@@ -17,6 +18,7 @@ export default function ExamCardDnD({
   isReschedule,
   onSplitExam,
   onMergeExam,
+  clashColor,
 }: ExamCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: String(exam.id),
@@ -31,7 +33,11 @@ export default function ExamCardDnD({
 
   const card = (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
-      <Card variant="surface" className="h-7">
+      <Card
+        variant="surface"
+        className="h-7"
+        style={clashColor ? { backgroundColor: clashColor } : undefined}
+      >
         <Flex align="center" justify="between">
           <Text size="1" weight="bold">
             {exam.courseCode}
