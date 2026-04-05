@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { getCapacityStatus } from "@/app/lib/capacityUtils";
 import { Column as ColumnType, Exam, Venue } from "../types/calendarTypes";
 import ExamCardDnD from "./ExamCardDnD";
 import { useDroppable } from "@dnd-kit/core";
@@ -10,19 +10,45 @@ function DroppableSlot({
   droppableId,
   label,
   exams,
+  isReschedule,
+  allExams,
+  onSplitExam,
+  onMergeExam,
+  clashColorMap,
+  venueCapacity,
 }: {
   droppableId: string;
   label?: string;
   exams: Exam[];
+  allExams?: Exam[];
+  isReschedule: boolean;
+  onSplitExam?: (exam: Exam) => void;
+  onMergeExam?: (exam: Exam) => void;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
+  venueCapacity?: number;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <span className="text-xs font-semibold text-gray-700 truncate px-1">
-          {label}
-        </span>
+        <div className="flex flex-col px-1">
+          <span className="text-xs font-semibold text-gray-700 truncate">
+            {label}
+          </span>
+          {venueCapacity != null &&
+            (() => {
+              const { occupied, colorClass } = getCapacityStatus(
+                exams,
+                venueCapacity,
+              );
+              return (
+                <span className={`text-xs font-normal ${colorClass}`}>
+                  {occupied}/{venueCapacity} students
+                </span>
+              );
+            })()}
+        </div>
       )}
       <div
         ref={setNodeRef}
@@ -35,7 +61,17 @@ function DroppableSlot({
         {exams.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-2">Drop here</p>
         ) : (
-          exams.map((exam) => <ExamCardDnD key={exam.id} exam={exam} />)
+          exams.map((exam) => (
+            <ExamCardDnD
+              key={exam.id}
+              exam={exam}
+              allExams={allExams}
+              isReschedule={isReschedule}
+              onSplitExam={onSplitExam}
+              onMergeExam={onMergeExam}
+              clashColor={clashColorMap?.get(exam.id)} //
+            />
+          ))
         )}
       </div>
     </div>
@@ -45,15 +81,23 @@ function DroppableSlot({
 type TimeColumnProps = {
   column: ColumnType;
   exams: Exam[];
+  allExams?: Exam[];
+  onSplitExam?: (exam: Exam) => void;
+  onMergeExam?: (exam: Exam) => void;
   venues?: Venue[];
   isLoading?: boolean;
+  clashColorMap?: Map<number, "orange" | "hotpink">;
 };
 
 export default function TimeColumn({
   column,
   exams,
+  allExams = [],
+  onSplitExam,
+  onMergeExam,
   venues = [],
   isLoading,
+  clashColorMap,
 }: TimeColumnProps) {
   const isReschedule = column.id === "0";
 
@@ -71,15 +115,29 @@ export default function TimeColumn({
           <Spinner />
         </div>
       ) : isReschedule || venues.length === 0 ? (
-        <DroppableSlot droppableId={column.id} exams={exams} />
+        <DroppableSlot
+          droppableId={column.id}
+          exams={exams}
+          allExams={allExams}
+          isReschedule={isReschedule}
+          onSplitExam={onSplitExam}
+          onMergeExam={onMergeExam}
+          clashColorMap={clashColorMap}
+        />
       ) : (
         <div className="flex flex-col gap-4">
           {venues.map((venue) => (
             <DroppableSlot
-              key={`venue-${venue.name}`}
-              droppableId={`${column.id}-${venue.name}`}
+              key={`venue-${venue.id}`}
+              droppableId={`${column.id}-${venue.id}`}
               label={venue.name}
+              allExams={allExams}
               exams={exams.filter((e) => e.venue_id === venue.id)}
+              isReschedule={false}
+              onSplitExam={onSplitExam}
+              onMergeExam={onMergeExam}
+              clashColorMap={clashColorMap}
+              venueCapacity={venue.capacity}
             />
           ))}
         </div>

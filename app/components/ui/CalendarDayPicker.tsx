@@ -8,11 +8,15 @@ import CustomButton from "./CustomButton";
 import TimeColumn from "./TimeColumn";
 import { DndContext } from "@dnd-kit/core";
 import { useRefineCalendar } from "@/app/hooks/useRefineCalendar";
+import { useAdjacentDayExams } from "@/app/hooks/useAdjacentDayExams";
+import { useExamClashColors } from "@/app/hooks/useExamClashColors";
+import CapacityWarningDialog from "./CapacityWarningDialog";
 
 type CalendarProps = {
   startMonth: Date;
   endMonth: Date;
 };
+
 export default function CalendarDayPicker({
   startMonth,
   endMonth,
@@ -34,7 +38,31 @@ export default function CalendarDayPicker({
     handleConfirmMove,
     handleCancelMove,
     isLoading,
+    activeExam,
+    examSplits,
+    splitDialogOpen,
+    mergeDialogOpen,
+    onSplit,
+    onMerge,
+    onSplitConfirm,
+    onMergeConfirm,
+    onCloseSplit,
+    onCloseMerge,
+    capacityWarningOpen,
+    capacityWarningInfo,
+    handleDismissCapacityWarning,
   } = useRefineCalendar(selected);
+
+  // Fetch exams on day before and day after selected date
+  const { prevDayExams, nextDayExams } = useAdjacentDayExams(selected); // new
+
+  // Compute clash color per exam.id
+  const clashColorMap = useExamClashColors(
+    // new
+    exams ?? [],
+    prevDayExams,
+    nextDayExams,
+  );
 
   const rescheduleColumn = columns.find((col) => col.id === "0");
 
@@ -54,6 +82,17 @@ export default function CalendarDayPicker({
   return (
     <DndContext onDragEnd={handleExamDrag}>
       <div className="flex gap-4 p-4">
+        {capacityWarningInfo && (
+          <CapacityWarningDialog
+            open={capacityWarningOpen}
+            courseCode={capacityWarningInfo.courseCode}
+            venueName={capacityWarningInfo.venueName}
+            occupied={capacityWarningInfo.occupied}
+            capacity={capacityWarningInfo.capacity}
+            incomingStudents={capacityWarningInfo.incomingStudents}
+            onDismiss={handleDismissCapacityWarning}
+          />
+        )}
         <Box className="flex-1" style={{ transition: "all 0.3s ease" }}>
           {!isSelected && !isCollapsed && (
             <div className={hasInteracted ? "motion-preset-slide-down" : ""}>
@@ -101,6 +140,17 @@ export default function CalendarDayPicker({
                 isLoading={isLoading}
                 handleConfirmMove={handleConfirmMove}
                 handleCancelMove={handleCancelMove}
+                activeExam={activeExam}
+                examSplits={examSplits}
+                splitDialogOpen={splitDialogOpen}
+                mergeDialogOpen={mergeDialogOpen}
+                onSplitExam={onSplit}
+                onMergeExam={onMerge}
+                onSplitConfirm={onSplitConfirm}
+                onMergeConfirm={onMergeConfirm}
+                onCloseSplit={onCloseSplit}
+                onCloseMerge={onCloseMerge}
+                clashColorMap={clashColorMap} //
               />
             </div>
           )}

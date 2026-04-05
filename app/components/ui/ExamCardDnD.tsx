@@ -1,8 +1,25 @@
 import { useDraggable } from "@dnd-kit/core";
 import { Exam } from "../types/calendarTypes";
 import { Card, Flex, Text } from "@radix-ui/themes";
+import ExamActionMenu from "./ExamActionsMenu";
 
-export default function ExamCardDnD({ exam }: { exam: Exam }) {
+type ExamCardProps = {
+  exam: Exam;
+  allExams?: Exam[];
+  isReschedule?: boolean;
+  onSplitExam?: (exam: Exam) => void;
+  onMergeExam?: (exam: Exam) => void;
+  clashColor?: "orange" | "hotpink";
+};
+
+export default function ExamCardDnD({
+  exam,
+  allExams = [],
+  isReschedule,
+  onSplitExam,
+  onMergeExam,
+  clashColor,
+}: ExamCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: String(exam.id),
   });
@@ -11,10 +28,16 @@ export default function ExamCardDnD({ exam }: { exam: Exam }) {
     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
     : undefined;
 
-  return (
+  const hasSplits =
+    allExams.filter((e) => e.courseCode === exam.courseCode).length > 1;
+
+  const card = (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
-      {/* <CustomCard className="h-2">{exam.courseCode}</CustomCard> */}
-      <Card variant="surface" className="h-7">
+      <Card
+        variant="surface"
+        className="h-7"
+        style={clashColor ? { backgroundColor: clashColor } : undefined}
+      >
         <Flex align="center" justify="between">
           <Text size="1" weight="bold">
             {exam.courseCode}
@@ -25,5 +48,18 @@ export default function ExamCardDnD({ exam }: { exam: Exam }) {
         </Flex>
       </Card>
     </div>
+  );
+
+  if (isReschedule) return card;
+
+  return (
+    <ExamActionMenu
+      exam={exam}
+      hasSplits={hasSplits}
+      onSplitExam={() => onSplitExam?.(exam)}
+      onMergeExam={() => onMergeExam?.(exam)}
+    >
+      {card}
+    </ExamActionMenu>
   );
 }

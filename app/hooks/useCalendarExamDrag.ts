@@ -8,6 +8,14 @@ import {
 } from "../components/types/calendarTypes";
 import { ALL_COLUMNS } from "../components/constants/columns";
 
+type CapacityWarningInfo = {
+  courseCode: string;
+  venueName: string;
+  occupied: number;
+  capacity: number;
+  incomingStudents: number;
+};
+
 function parseDroppableId(id: string): {
   timeColumnId: string;
   venueId: number | null;
@@ -26,9 +34,24 @@ export function useCalendarExamDrag(
   fetchDaysWithExams: () => Promise<void>,
   moveActions: CalendarMoveActions,
   venues: Venue[],
+  wouldExceedCapacity: (
+    venueId: number,
+    timeColId: string,
+    students: number,
+  ) => boolean,
+  occupancyMap: Record<number, Record<string, number>>,
 ) {
   const [alertOpen, setAlertOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+
+  const [capacityWarningOpen, setCapacityWarningOpen] = useState(false);
+  const [capacityWarningInfo, setCapacityWarningInfo] =
+    useState<CapacityWarningInfo | null>(null);
+
+  function handleDismissCapacityWarning() {
+    setCapacityWarningOpen(false);
+    setCapacityWarningInfo(null);
+  }
 
   function handleExamDrag(event: DragEndEvent) {
     const { active, over } = event;
@@ -80,6 +103,27 @@ export function useCalendarExamDrag(
       toVenueId: toColumn.id === "0" ? undefined : (newVenueId ?? undefined),
     });
 
+    if (newVenueId !== null && toColumn.id !== "0") {
+      if (
+        wouldExceedCapacity(
+          newVenueId,
+          newTimeColumnId,
+          exam.number_of_students,
+        )
+      ) {
+        const venue = venues.find((v) => v.id === newVenueId);
+        setCapacityWarningInfo({
+          courseCode: exam.courseCode,
+          venueName: venue?.name ?? String(newVenueId),
+          occupied: occupancyMap[newVenueId]?.[newTimeColumnId] ?? 0,
+          capacity: venue?.capacity ?? 0,
+          incomingStudents: exam.number_of_students,
+        });
+        setCapacityWarningOpen(true);
+        return;
+      }
+    }
+
     setAlertOpen(true);
   }
 
@@ -117,5 +161,8 @@ export function useCalendarExamDrag(
     handleExamDrag,
     handleConfirmMove,
     handleCancelMove,
+    capacityWarningOpen,
+    capacityWarningInfo,
+    handleDismissCapacityWarning,
   };
 }
