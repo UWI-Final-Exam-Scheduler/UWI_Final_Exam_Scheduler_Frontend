@@ -1,4 +1,5 @@
 import { Exam, PendingMove } from "../components/types/calendarTypes";
+import { examFetchbyDate } from "../lib/examFetch";
 import {
   formatDatetoString,
   rescheduleExam,
@@ -48,7 +49,6 @@ export function useCalendarMove(
     const newDateStr = formatDatetoString(currentDate);
     const courseCode = move.exam.courseCode;
 
-    // Move this split to calendar
     await rescheduleExam(
       move.exam.id,
       Number(move.toColumnId),
@@ -57,17 +57,67 @@ export function useCalendarMove(
       false,
     );
 
-    // Simply remove moved exam from reschedule, do NOT auto-merge
-    setRescheduleExams((prev: Exam[]) =>
-      prev.filter((e: Exam) => String(e.id) !== move.examId),
+    // Check if other splits already exist in this slot
+    const otherSplitsInSlot = exams.filter(
+      (e) =>
+        e.courseCode === courseCode &&
+        e.timeColumnId === move.toColumnId &&
+        e.venue_id === move.toVenueId,
     );
 
-    // Add moved exam to calendar
+    if (otherSplitsInSlot.length > 0) {
+      // Auto-merge with existing splits
+      try {
+        const splitsToMerge = [
+          move.exam.id,
+          ...otherSplitsInSlot.map((e) => e.id),
+        ];
+
+        const merged = await mergeExam(splitsToMerge);
+
+        // Remove from reschedule
+        setRescheduleExams((prev: Exam[]) =>
+          prev.filter((e: Exam) => e.id !== move.exam.id),
+        );
+
+        // Replace old splits with merged result
+        setExams((prev) => [
+          ...prev.filter((e) => !splitsToMerge.includes(e.id)),
+          ...merged.map((m: Exam) => ({
+            ...m,
+            timeColumnId: move.toColumnId,
+            date: newDateStr,
+            exam_date: newDateStr,
+            venue_id: move.toVenueId!,
+          })),
+        ]);
+
+        addLog({
+          action: "Auto-Merge Exams",
+          entityId: courseCode,
+          oldValue: `${splitsToMerge.length} splits`,
+          newValue: `Merged into ${merged.length} exam(s)`,
+        });
+
+        toast.success("Exams auto-merged successfully ✨");
+        return;
+      } catch (err) {
+        console.error("Auto-merge failed:", err);
+        toast.error("Failed to auto-merge exams");
+      }
+    }
+
+    // No merge — just move to calendar
+    setRescheduleExams((prev: Exam[]) =>
+      prev.filter((e: Exam) => e.id !== move.exam.id),
+    );
+
     setExams((prev: Exam[]) => [
       ...prev,
       {
         ...move.exam,
         date: newDateStr,
+        exam_date: newDateStr,
         time: Number(move.toColumnId),
         timeColumnId: move.toColumnId,
         venue_id: move.toVenueId!,
@@ -159,6 +209,14 @@ export function useCalendarMove(
       toast.success("Exam moved successfully");
     }
   }
+
+  // Refetch both calendar and reschedule to sync allScheduledExams
+  if (currentDate) {
+    // Re-fetch current day exams (this will update exams which syncs allScheduledExams via useEffect)
+    const freshDayData = await examFetchbyDate(formatDatetoString(currentDate));
+    // State will be updated via the fetch functions
+  }
+  await fetchRescheduleExams?.();
 
   return {
     handleMoveToReschedule,

@@ -28,6 +28,8 @@ export function useRefineCalendar(date: Date | undefined) {
     fetchState.venues,
     wouldExceedCapacity,
     occupancyMap,
+    fetchState.fetchRescheduleExams,
+    fetchState.fetchDaysWithExams,
   );
 
   const splitMerge = useExamSplitMerge(

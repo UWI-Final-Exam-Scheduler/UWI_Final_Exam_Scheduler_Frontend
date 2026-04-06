@@ -41,6 +41,8 @@ export function useCalendarExamDrag(
     students: number,
   ) => boolean,
   occupancyMap: Record<number, Record<string, number>>,
+  fetchRescheduleExams?: () => Promise<void>,
+  fetchCurrentDayExams?: () => Promise<void>,
 ) {
   const [alertOpen, setAlertOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
@@ -254,20 +256,27 @@ export function useCalendarExamDrag(
     const isMovingFromReschedule = pendingMove.fromColumnId === "0";
     const currentDate = selectedDateRef.current;
 
-    if (isMovingToReschedule) {
-      await moveActions.handleMoveToReschedule(pendingMove);
-    } else if (isMovingFromReschedule && currentDate) {
-      await moveActions.handleMoveFromReschedule(
-        pendingMove,
-        currentDate,
-        rescheduleExams,
-      );
-    } else {
-      await moveActions.handleSameDayTimeChange(pendingMove);
-    }
+    try {
+      if (isMovingToReschedule) {
+        await moveActions.handleMoveToReschedule(pendingMove);
+      } else if (isMovingFromReschedule && currentDate) {
+        await moveActions.handleMoveFromReschedule(
+          pendingMove,
+          currentDate,
+          rescheduleExams,
+        );
+      } else {
+        await moveActions.handleSameDayTimeChange(pendingMove);
+      }
 
-    // fetch fresh data from backend
-    await fetchDaysWithExams();
+      // *** CRITICAL: Refetch fresh data from backend ***
+      await fetchDaysWithExams();
+      await fetchRescheduleExams?.();
+      await fetchCurrentDayExams?.();
+    } catch (error) {
+      console.error("Move operation failed:", error);
+      toast.error("Failed to move exam");
+    }
 
     if (pendingMove?.exam && rescheduleExams) {
       const remainingSplits = rescheduleExams.filter(
@@ -285,6 +294,7 @@ export function useCalendarExamDrag(
         setRemainingSplitsDialogOpen(true);
       }
     }
+
     setPendingMove(null);
     setAlertOpen(false);
   }
