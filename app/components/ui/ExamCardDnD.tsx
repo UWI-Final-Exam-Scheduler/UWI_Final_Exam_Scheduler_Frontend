@@ -53,7 +53,18 @@ export default function ExamCardDnD({
     </div>
   );
 
-  if (isReschedule) return card; // no hover card or action menu during rescheduling
+  if (isReschedule) {
+    return (
+      <ExamActionMenu
+        exam={exam}
+        hasSplits={hasSplits}
+        onSplitExam={() => onSplitExam?.(exam)}
+        onMergeExam={() => onMergeExam?.(exam)}
+      >
+        {card}
+      </ExamActionMenu>
+    );
+  }
 
   const cardWithHover = clashDetail ? (
     <ExamHoverCard clash={clashDetail.clash} examClashes={clashDetail.exams}>

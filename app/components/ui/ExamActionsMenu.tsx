@@ -20,7 +20,9 @@ export default function ExamContextMenu({
 }: ActionMenuProps) {
   return (
     <ContextMenu.Root>
-      <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
+      <ContextMenu.Trigger asChild>
+        <div>{children}</div>
+      </ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className="bg-white border border-gray-200 rounded-lg shadow-lg p-1 min-w-[150px] z-50">
           <ContextMenu.Item

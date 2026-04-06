@@ -31,11 +31,25 @@ export function useRefineCalendar(date: Date | undefined) {
   );
 
   const splitMerge = useExamSplitMerge(fetchState.exams, fetchState.setExams);
+  const rescheduleSplitMerge = useExamSplitMerge(
+    fetchState.rescheduleExams,
+    fetchState.setRescheduleExams,
+  );
 
   return {
     ...fetchState,
     ...dragState,
     ...splitMerge,
+    rescheduleActiveExam: rescheduleSplitMerge.activeExam,
+    rescheduleExamSplits: rescheduleSplitMerge.examSplits,
+    rescheduleSplitDialogOpen: rescheduleSplitMerge.splitDialogOpen,
+    rescheduleMergeDialogOpen: rescheduleSplitMerge.mergeDialogOpen,
+    onRescheduleExamSplit: rescheduleSplitMerge.onSplit,
+    onRescheduleExamMerge: rescheduleSplitMerge.onMerge,
+    onRescheduleExamSplitConfirm: rescheduleSplitMerge.onSplitConfirm,
+    onRescheduleExamMergeConfirm: rescheduleSplitMerge.onMergeConfirm,
+    onCloseRescheduleSplit: rescheduleSplitMerge.onCloseSplit,
+    onCloseRescheduleMerge: rescheduleSplitMerge.onCloseMerge,
     columns: ALL_COLUMNS,
   };
 }
