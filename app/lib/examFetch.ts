@@ -41,6 +41,8 @@ export async function rescheduleExam( //have to add venue
     console.error("Reschedule failed:", response.status, body);
     throw new Error("Failed to reschedule exam");
   }
+
+  return await response.json();
 }
 
 export async function get_days_with_exams() {

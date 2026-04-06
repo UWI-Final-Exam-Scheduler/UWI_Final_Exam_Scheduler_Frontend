@@ -11,6 +11,7 @@ import { useRefineCalendar } from "@/app/hooks/useRefineCalendar";
 import { useAdjacentDayExams } from "@/app/hooks/useAdjacentDayExams";
 import { useExamClashColors } from "@/app/hooks/useExamClashColors";
 import CapacityWarningDialog from "./CapacityWarningDialog";
+import SplitConflictDialog from "./SplitConflictDialog";
 import MergeExamDialog from "./MergeExamDialog";
 import SplitExamDialog from "./SplitExamDialog";
 
@@ -63,6 +64,9 @@ export default function CalendarDayPicker({
     onRescheduleExamMergeConfirm,
     onCloseRescheduleSplit,
     onCloseRescheduleMerge,
+    splitConflictOpen,
+    splitConflictInfo,
+    handleDismissSplitConflict,
   } = useRefineCalendar(selected);
 
   // Fetch exams on day before and day after selected date
@@ -103,6 +107,11 @@ export default function CalendarDayPicker({
             onDismiss={handleDismissCapacityWarning}
           />
         )}
+        <SplitConflictDialog
+          open={splitConflictOpen}
+          courseCode={splitConflictInfo?.courseCode ?? ""}
+          onDismiss={handleDismissSplitConflict}
+        />
         <Box className="flex-1" style={{ transition: "all 0.3s ease" }}>
           {!isSelected && !isCollapsed && (
             <div className={hasInteracted ? "motion-preset-slide-down" : ""}>

@@ -5,11 +5,14 @@ import { splitExam, mergeExam } from "../lib/examFetch";
 export function useExamSplitMerge(
   exams: Exam[],
   setExams: Dispatch<SetStateAction<Exam[]>>,
+  rescheduleExams: Exam[],
+  setRescheduleExams: Dispatch<SetStateAction<Exam[]>>,
   refetch?: () => Promise<void>,
 ) {
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [activeExam, setActiveExam] = useState<Exam | null>(null);
+  const isReschedule = activeExam?.timeColumnId === "0";
 
   function onSplit(exam: Exam) {
     setActiveExam(exam);
@@ -49,10 +52,17 @@ export function useExamSplitMerge(
         date: activeExam.date,
         exam_date: activeExam.exam_date,
       }));
-      setExams((prev) => [
-        ...prev.filter((e) => e.id !== activeExam.id),
-        ...inheritedExams,
-      ]);
+      if (isReschedule) {
+        setRescheduleExams((prev) => [
+          ...prev.filter((e) => e.id !== activeExam.id),
+          ...inheritedExams.map((e: Exam) => ({ ...e, timeColumnId: "0" })),
+        ]);
+      } else {
+        setExams((prev) => [
+          ...prev.filter((e) => e.id !== activeExam.id),
+          ...inheritedExams,
+        ]);
+      }
       onCloseSplit();
       await refetch?.();
     } catch (error) {
@@ -63,10 +73,19 @@ export function useExamSplitMerge(
   async function onMergeConfirm(examIds: number[]) {
     try {
       const merged = await mergeExam(examIds);
-      setExams((prev) => [
-        ...prev.filter((e) => !examIds.includes(e.id)),
-        ...merged,
-      ]);
+
+      if (isReschedule) {
+        setRescheduleExams((prev) => [
+          ...prev.filter((e) => !examIds.includes(e.id)),
+          ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+        ]);
+      } else {
+        setExams((prev) => [
+          ...prev.filter((e) => !examIds.includes(e.id)),
+          ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+        ]);
+      }
+
       await refetch?.();
     } catch (error) {
       console.error("Failed to merge exams:", error);
@@ -74,8 +93,10 @@ export function useExamSplitMerge(
     onCloseMerge();
   }
 
+  const source = isReschedule ? rescheduleExams : exams;
+
   const examSplits = activeExam
-    ? exams.filter((e) => e.id !== activeExam.id)
+    ? source.filter((e) => e.courseCode === activeExam.courseCode)
     : [];
 
   return {

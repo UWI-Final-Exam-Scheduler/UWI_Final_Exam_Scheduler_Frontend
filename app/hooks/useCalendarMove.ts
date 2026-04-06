@@ -14,24 +14,17 @@ export function useCalendarMove(
     const courseCode = move.exam.courseCode;
     const splits = exams.filter((e) => e.courseCode === courseCode);
 
-    // Reschedule ALL splits in the backend, not just the dragged one
-    for (const split of splits) {
-      await rescheduleExam(split.id, 0, null, null, true);
-    }
+    const updatedExam = await rescheduleExam(splits[0].id, 0, null, null, true);
 
-    const totalStudents = splits.reduce(
-      (sum, s) => sum + s.number_of_students,
-      0,
-    );
-
+    // remove all splits from calendar
     setExams((prev) => prev.filter((e) => e.courseCode !== courseCode));
+
+    // add the REAL merged exam from backend
     setRescheduleExams((prev) => [
       ...prev,
       {
-        ...move.exam,
+        ...updatedExam,
         timeColumnId: "0",
-        number_of_students: totalStudents,
-        venue_id: 0,
       },
     ]);
 

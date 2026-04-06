@@ -30,8 +30,16 @@ export function useRefineCalendar(date: Date | undefined) {
     occupancyMap,
   );
 
-  const splitMerge = useExamSplitMerge(fetchState.exams, fetchState.setExams);
+  const splitMerge = useExamSplitMerge(
+    fetchState.exams,
+    fetchState.setExams,
+    fetchState.rescheduleExams,
+    fetchState.setRescheduleExams,
+    fetchState.fetchRescheduleExams,
+  );
   const rescheduleSplitMerge = useExamSplitMerge(
+    fetchState.rescheduleExams,
+    fetchState.setRescheduleExams,
     fetchState.rescheduleExams,
     fetchState.setRescheduleExams,
     fetchState.fetchRescheduleExams,
