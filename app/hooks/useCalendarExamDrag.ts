@@ -8,7 +8,6 @@ import {
 } from "../components/types/calendarTypes";
 import { ALL_COLUMNS } from "../components/constants/columns";
 import { toast } from "react-hot-toast";
-import { mergeExam } from "../lib/examFetch";
 
 type CapacityWarningInfo = {
   courseCode: string;
@@ -71,47 +70,6 @@ export function useCalendarExamDrag(
   function handleDismissSplitConflict() {
     setSplitConflictOpen(false);
     setSplitConflictInfo(null);
-  }
-
-  async function autoMergeSameDayTimeSplits(exam: Exam, scheduledDate: string) {
-    // Find all splits for this course
-    const courseSplits = [...exams, ...rescheduleExams].filter(
-      (e: Exam) => e.courseCode === exam.courseCode,
-    );
-
-    // If only 1 split or less, nothing to merge
-    if (courseSplits.length <= 1) {
-      return;
-    }
-
-    // Find splits scheduled on the SAME day, time, AND venue (not in reschedule)
-    const splitsOnSameDayTime = courseSplits.filter(
-      (e: Exam) =>
-        e.timeColumnId !== "0" && // Not in reschedule
-        e.exam_date === scheduledDate && // Same date
-        e.time === exam.time && // Same time
-        e.venue_id === exam.venue_id, // Same venue
-    );
-
-    // If 2 or more splits match, merge them
-    if (splitsOnSameDayTime.length >= 2) {
-      console.log(
-        `Auto-merging ${splitsOnSameDayTime.length} splits of ${exam.courseCode}`,
-      );
-
-      const splitIds = splitsOnSameDayTime.map((e: Exam) => e.id);
-
-      try {
-        // mergeing api
-        await mergeExam(splitIds);
-        toast.success(
-          `Auto-merged ${splitIds.length} splits of ${exam.courseCode}`,
-        );
-      } catch (error) {
-        console.error("Auto-merge failed:", error);
-        toast.error("Failed to auto-merge splits");
-      }
-    }
   }
 
   // Check if move violates split constraints
@@ -296,11 +254,6 @@ export function useCalendarExamDrag(
     const isMovingFromReschedule = pendingMove.fromColumnId === "0";
     const currentDate = selectedDateRef.current;
 
-    // store info needed for later
-    let shouldAutoMerge = false;
-    let autoMergeDateStr = "";
-    let autoMergeExam: Exam | null = null;
-
     if (isMovingToReschedule) {
       await moveActions.handleMoveToReschedule(pendingMove);
     } else if (isMovingFromReschedule && currentDate) {
@@ -309,36 +262,8 @@ export function useCalendarExamDrag(
         currentDate,
         rescheduleExams,
       );
-
-      //auto-merge AFTER state refresh
-      shouldAutoMerge = true;
-      autoMergeDateStr = `${currentDate.getFullYear()}-${String(
-        currentDate.getMonth() + 1,
-      ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
-      autoMergeExam = {
-        ...pendingMove.exam,
-        time: Number(pendingMove.toColumnId),
-        timeColumnId: pendingMove.toColumnId,
-        venue_id: pendingMove.toVenueId!,
-      };
     } else {
       await moveActions.handleSameDayTimeChange(pendingMove);
-
-      // auto-merge AFTER state refresh
-      if (selectedDateRef.current && pendingMove.toVenueId) {
-        shouldAutoMerge = true;
-        autoMergeDateStr = `${selectedDateRef.current.getFullYear()}-${String(
-          selectedDateRef.current.getMonth() + 1,
-        ).padStart(2, "0")}-${String(
-          selectedDateRef.current.getDate(),
-        ).padStart(2, "0")}`;
-        autoMergeExam = {
-          ...pendingMove.exam,
-          time: Number(pendingMove.toColumnId),
-          timeColumnId: pendingMove.toColumnId,
-          venue_id: pendingMove.toVenueId,
-        };
-      }
     }
 
     // fetch fresh data from backend
@@ -360,12 +285,6 @@ export function useCalendarExamDrag(
         setRemainingSplitsDialogOpen(true);
       }
     }
-
-    // auto-merge with fresh state
-    if (shouldAutoMerge && autoMergeExam) {
-      await autoMergeSameDayTimeSplits(autoMergeExam, autoMergeDateStr);
-    }
-
     setPendingMove(null);
     setAlertOpen(false);
   }

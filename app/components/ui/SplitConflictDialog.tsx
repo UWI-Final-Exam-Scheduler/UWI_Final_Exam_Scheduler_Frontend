@@ -32,16 +32,18 @@ export default function SplitConflictDialog({
           </p>
           {existingDate && existingTime ? (
             <p className="text-sm text-yellow-800 mb-4">
-              Existing splits are scheduled on{" "}
+              Existing split(s) are scheduled on{" "}
               <strong>
-                {existingDate} at {existingTime}
+                {existingDate} at {String(existingTime).padStart(2, "0")}:00
               </strong>
             </p>
           ) : (
             <p className="text-sm text-yellow-700 mb-4">
-              Some splits are already scheduled on different times.
+              This course has splits scheduled on different times. All splits of
+              the same course must be scheduled together.
             </p>
           )}
+
           <div className="rounded-lg bg-yellow-100 border border-yellow-200 px-4 py-3 text-sm text-yellow-800 mb-4">
             All splits must be scheduled on the{" "}
             <strong>same day and time</strong>.

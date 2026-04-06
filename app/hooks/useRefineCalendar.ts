@@ -59,6 +59,9 @@ export function useRefineCalendar(date: Date | undefined) {
     onRescheduleExamMergeConfirm: rescheduleSplitMerge.onMergeConfirm,
     onCloseRescheduleSplit: rescheduleSplitMerge.onCloseSplit,
     onCloseRescheduleMerge: rescheduleSplitMerge.onCloseMerge,
+    splitConflictOpen: dragState.splitConflictOpen,
+    splitConflictInfo: dragState.splitConflictInfo,
+    handleDismissSplitConflict: dragState.handleDismissSplitConflict,
     columns: ALL_COLUMNS,
   };
 }

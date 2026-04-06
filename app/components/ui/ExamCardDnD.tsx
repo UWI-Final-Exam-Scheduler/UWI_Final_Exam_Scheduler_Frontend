@@ -42,9 +42,26 @@ export default function ExamCardDnD({
         style={clashColor ? { backgroundColor: clashColor } : undefined}
       >
         <Flex align="center" justify="between">
-          <Text size="1" weight="bold">
-            {exam.courseCode}
-          </Text>
+          <div className="flex items-center gap-2">
+            <Text size="1" weight="bold">
+              {exam.courseCode}
+            </Text>
+            {hasSplits &&
+              (() => {
+                const splitsForCourse = allExams.filter(
+                  (e) => e.courseCode === exam.courseCode,
+                );
+                const splitIndex =
+                  splitsForCourse.findIndex((e) => e.id === exam.id) + 1;
+                const splitTotal = splitsForCourse.length;
+                return (
+                  <span className="text-xs text-black px-1.5 py-0.5 rounded">
+                    {splitIndex}/{splitTotal}
+                  </span>
+                );
+              })()}
+          </div>
+
           <Text size="1" weight="medium">
             {exam.number_of_students}
           </Text>

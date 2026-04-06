@@ -1,6 +1,7 @@
 import { useState, Dispatch, SetStateAction } from "react";
 import { Exam } from "../components/types/calendarTypes";
 import { splitExam, mergeExam } from "../lib/examFetch";
+import { toast } from "react-hot-toast";
 
 export function useExamSplitMerge(
   exams: Exam[],
@@ -70,29 +71,49 @@ export function useExamSplitMerge(
     }
   }
 
-  async function onMergeConfirm(examIds: number[]) {
+  async function onMergeConfirm(examIds: number[], moveToReschedule = false) {
     try {
       const merged = await mergeExam(examIds);
 
-      if (isReschedule) {
-        setRescheduleExams((prev) => [
-          ...prev.filter((e) => !examIds.includes(e.id)),
-          ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
-        ]);
+      if (moveToReschedule) {
+        // if there is overflow, move merged exam to reschedule
+        if (isReschedule) {
+          setRescheduleExams((prev) => [
+            ...prev.filter((e) => !examIds.includes(e.id)),
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        } else {
+          // Remove from calendar, add to reschedule
+          setExams((prev) => prev.filter((e) => !examIds.includes(e.id)));
+          setRescheduleExams((prev) => [
+            ...prev,
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        }
+        toast.success("Merged exam moved to reschedule due to capacity");
       } else {
-        setExams((prev) => [
-          ...prev.filter((e) => !examIds.includes(e.id)),
-          ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
-        ]);
+        // Normal merge (no overflow)
+        if (isReschedule) {
+          setRescheduleExams((prev) => [
+            ...prev.filter((e) => !examIds.includes(e.id)),
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        } else {
+          setExams((prev) => [
+            ...prev.filter((e) => !examIds.includes(e.id)),
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        }
+        toast.success("Exams merged successfully");
       }
 
       await refetch?.();
     } catch (error) {
       console.error("Failed to merge exams:", error);
+      toast.error("Failed to merge exams");
     }
     onCloseMerge();
   }
-
   const source = isReschedule ? rescheduleExams : exams;
 
   const examSplits = activeExam

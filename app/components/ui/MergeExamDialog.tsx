@@ -9,7 +9,7 @@ type MergeDialogProps = {
   exam: Exam | null;
   splits: Exam[];
   open: boolean;
-  onConfirm: (examIds: number[]) => Promise<void>;
+  onConfirm: (examIds: number[], moveToReschedule?: boolean) => Promise<void>;
   onCancel: () => void;
   venues?: Venue[];
   occupancyMap?: Record<number, Record<string, number>>;
@@ -54,7 +54,7 @@ export default function MergeExamDialog({
       }
       confirmDisabled={selected.size < 2}
       confirmColor="blue"
-      onConfirm={() => onConfirm([...selected])}
+      onConfirm={() => onConfirm([...selected], wouldExceed)}
       onCancel={onCancel}
     >
       {isSimple ? (
