@@ -34,7 +34,7 @@ export function useExamSplitMerge(
     if (!activeExam) return;
     try {
       const newExams = await splitExam(
-        activeExam.courseCode,
+        activeExam.id,
         splits,
         activeExam.venue_id ?? undefined,
         activeExam.time ?? undefined,

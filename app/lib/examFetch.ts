@@ -64,7 +64,7 @@ export function formatStringtoDate(dateStr: string) {
 }
 
 export async function splitExam(
-  courseCode: string,
+  examId: number,
   splits: { number_of_students: number }[],
   venueId?: number,
   time?: number | null,
@@ -72,10 +72,14 @@ export async function splitExam(
 ) {
   const response = await apiFetch(`/api/exams/split`, {
     method: "POST",
-    body: JSON.stringify({ courseCode, splits, venueId, time, date }),
+    body: JSON.stringify({ examId, splits, venueId, time, date }),
   });
 
-  if (!response.ok) throw new Error("Failed to split exam");
+  if (!response.ok) {
+    const body = await response.text();
+    console.error("Split exam failed:", response.status, body);
+    throw new Error("Failed to split exam");
+  }
   const data = await response.json();
   return (data ?? []).map((exam: Exam) => ({
     ...exam,

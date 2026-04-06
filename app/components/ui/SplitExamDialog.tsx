@@ -64,7 +64,7 @@ export default function SplitExamDialog({
               max={total}
               value={split.number_of_students || ""}
               onChange={(e) => updateSplit(i, Number(e.target.value))}
-              className="w-28 rounded border px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="w-28 rounded border px-2 py-1 text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
               placeholder="Students"
             />
             {splits.length > 2 && (
