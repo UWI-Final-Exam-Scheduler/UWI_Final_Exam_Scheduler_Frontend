@@ -8,6 +8,11 @@ import {
 } from "../lib/examFetch";
 import { venueFetch } from "../lib/venueFetch";
 
+function isWeekend(date: Date): boolean {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
 export function useCalendarExamFetch(date: Date | undefined) {
   const [exams, setExams] = useState<Exam[]>([]);
   const [rescheduleExams, setRescheduleExams] = useState<Exam[]>([]);
@@ -47,6 +52,10 @@ export function useCalendarExamFetch(date: Date | undefined) {
   useEffect(() => {
     selectedDateRef.current = date;
     if (!date) return;
+    if (isWeekend(date)) {
+      setExams([]);
+      return;
+    }
     const fetchExams = async () => {
       setIsLoading(true);
       try {
