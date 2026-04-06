@@ -11,6 +11,8 @@ import { useRefineCalendar } from "@/app/hooks/useRefineCalendar";
 import { useAdjacentDayExams } from "@/app/hooks/useAdjacentDayExams";
 import { useExamClashColors } from "@/app/hooks/useExamClashColors";
 import CapacityWarningDialog from "./CapacityWarningDialog";
+import MergeExamDialog from "./MergeExamDialog";
+import SplitExamDialog from "./SplitExamDialog";
 
 type CalendarProps = {
   startMonth: Date;
@@ -51,6 +53,16 @@ export default function CalendarDayPicker({
     capacityWarningOpen,
     capacityWarningInfo,
     handleDismissCapacityWarning,
+    rescheduleActiveExam,
+    rescheduleExamSplits,
+    rescheduleSplitDialogOpen,
+    rescheduleMergeDialogOpen,
+    onRescheduleExamSplit,
+    onRescheduleExamMerge,
+    onRescheduleExamSplitConfirm,
+    onRescheduleExamMergeConfirm,
+    onCloseRescheduleSplit,
+    onCloseRescheduleMerge,
   } = useRefineCalendar(selected);
 
   // Fetch exams on day before and day after selected date
@@ -160,12 +172,38 @@ export default function CalendarDayPicker({
             <TimeColumn
               column={rescheduleColumn}
               exams={rescheduleExams ?? []}
+              allExams={rescheduleExams ?? []}
               isLoading={isLoading}
+              onSplitExam={onRescheduleExamSplit}
+              onMergeExam={onRescheduleExamMerge}
               clashColorMap={colorMap}
               clashExamsMap={clashExamsMap}
             />
           </aside>
         )}
+        <SplitExamDialog
+          key={
+            rescheduleActiveExam?.courseCode
+              ? `${rescheduleActiveExam.courseCode}-reschedule-split`
+              : undefined
+          }
+          exam={rescheduleActiveExam}
+          open={rescheduleSplitDialogOpen}
+          onConfirm={onRescheduleExamSplitConfirm}
+          onCancel={onCloseRescheduleSplit}
+        />
+        <MergeExamDialog
+          key={
+            rescheduleActiveExam?.courseCode
+              ? `${rescheduleActiveExam.courseCode}-reschedule-merge`
+              : undefined
+          }
+          exam={rescheduleActiveExam}
+          splits={rescheduleExamSplits}
+          open={rescheduleMergeDialogOpen}
+          onConfirm={onRescheduleExamMergeConfirm}
+          onCancel={onCloseRescheduleMerge}
+        />
       </div>
     </DndContext>
   );
