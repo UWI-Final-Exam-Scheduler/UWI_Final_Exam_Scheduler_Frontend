@@ -1,5 +1,4 @@
 import { Exam, PendingMove } from "../components/types/calendarTypes";
-import { examFetchbyDate } from "../lib/examFetch";
 import {
   formatDatetoString,
   rescheduleExam,
@@ -209,14 +208,6 @@ export function useCalendarMove(
       toast.success("Exam moved successfully");
     }
   }
-
-  // Refetch both calendar and reschedule to sync allScheduledExams
-  if (currentDate) {
-    // Re-fetch current day exams (this will update exams which syncs allScheduledExams via useEffect)
-    const freshDayData = await examFetchbyDate(formatDatetoString(currentDate));
-    // State will be updated via the fetch functions
-  }
-  await fetchRescheduleExams?.();
 
   return {
     handleMoveToReschedule,
