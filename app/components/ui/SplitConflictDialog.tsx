@@ -42,7 +42,6 @@ export default function SplitConflictDialog({
               Some splits are already scheduled on different times.
             </p>
           )}
-
           <div className="rounded-lg bg-yellow-100 border border-yellow-200 px-4 py-3 text-sm text-yellow-800 mb-4">
             All splits must be scheduled on the{" "}
             <strong>same day and time</strong>.

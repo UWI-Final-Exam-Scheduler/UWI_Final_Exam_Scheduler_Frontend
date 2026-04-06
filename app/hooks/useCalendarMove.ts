@@ -50,7 +50,7 @@ export function useCalendarMove(
     const newDateStr = formatDatetoString(currentDate);
     const courseCode = move.exam.courseCode;
 
-    // Step 1: Move this split to calendar
+    // Move this split to calendar
     await rescheduleExam(
       move.exam.id,
       Number(move.toColumnId),
@@ -59,15 +59,14 @@ export function useCalendarMove(
       false,
     );
 
-    // Step 2: Find remaining reschedule splits for this course
+    // Find remaining reschedule splits for this course
     const otherRescheduleSplits = rescheduleExamsList.filter(
       (e: Exam) => e.courseCode === courseCode && String(e.id) !== move.examId,
     );
 
-    // Step 3: Handle remaining splits
-    // ✅ Only merge if there are 2 or more splits to merge
+    // handle remaining splits
+    // Only merge if there are 2 or more splits to merge
     if (otherRescheduleSplits.length >= 2) {
-      // Multiple splits exist - MERGE them together
       try {
         const mergedExams = await mergeExam(
           otherRescheduleSplits.map((e: Exam) => e.id),
@@ -75,9 +74,12 @@ export function useCalendarMove(
         const mergedExam = mergedExams[0];
 
         setRescheduleExams((prev: Exam[]) => [
-          // Remove all old splits of this course
-          ...prev.filter((e: Exam) => e.courseCode !== courseCode),
-          // Add the merged exam
+          // Remove all splits of this course AND the moved exam
+          ...prev.filter(
+            (e: Exam) =>
+              e.courseCode !== courseCode && String(e.id) !== move.examId,
+          ),
+          // Add back only the merged exam
           {
             ...mergedExam,
             timeColumnId: "0",
@@ -90,18 +92,18 @@ export function useCalendarMove(
         toast.error("Failed to merge exam splits");
       }
     } else if (otherRescheduleSplits.length === 1) {
-      // Only 1 split remaining - just remove it (no merge needed)
+      // Only 1 split remaining - just remove the moved one
       setRescheduleExams((prev: Exam[]) =>
-        prev.filter((e: Exam) => e.courseCode !== courseCode),
+        prev.filter((e: Exam) => String(e.id) !== move.examId),
       );
     } else {
-      // No other splits - nothing to do
+      // No other splits - just remove the moved one
       setRescheduleExams((prev: Exam[]) =>
         prev.filter((e: Exam) => String(e.id) !== move.examId),
       );
     }
 
-    // Step 4: Add moved exam to calendar
+    // Add moved exam to calendar
     setExams((prev: Exam[]) => [
       ...prev,
       {
@@ -120,7 +122,7 @@ export function useCalendarMove(
       newValue: `Time: ${move.toColumnId}, Date: ${newDateStr}, Venue: ${move.toVenueId}`,
     });
 
-    toast.success("Exam Rescheduled & splits merged ✅");
+    toast.success("Exam Rescheduled & splits merged");
   }
 
   async function handleSameDayTimeChange(move: PendingMove) {
@@ -152,7 +154,7 @@ export function useCalendarMove(
       newValue: `Time: ${move.toColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.toVenueId ?? move.exam.venue_id}`,
     });
 
-    toast.success("Exam moved successfully ✅");
+    toast.success("Exam moved successfully");
   }
   return {
     handleMoveToReschedule,

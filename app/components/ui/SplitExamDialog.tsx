@@ -12,6 +12,7 @@ type SplitEntryProps = {
   open: boolean;
   onConfirm: (splits: SplitEntry[]) => Promise<void>;
   onCancel: () => void;
+  existingSplitCount?: number;
 };
 
 export default function SplitExamDialog({
@@ -19,6 +20,7 @@ export default function SplitExamDialog({
   open,
   onConfirm,
   onCancel,
+  existingSplitCount,
 }: SplitEntryProps) {
   const [splits, setSplits] = useState<SplitEntry[]>([
     { number_of_students: 0 },
@@ -41,7 +43,7 @@ export default function SplitExamDialog({
       open={open}
       title={`Split ${exam.courseCode}`}
       confirmLabel="Confirm Split"
-      confirmDisabled={!isValid}
+      confirmDisabled={!isValid || (existingSplitCount || 0) >= 4}
       onConfirm={() => onConfirm(splits)}
       onCancel={onCancel}
     >
@@ -82,7 +84,13 @@ export default function SplitExamDialog({
         ))}
       </div>
 
-      {splits.length < 4 && (
+      {(existingSplitCount || 0) + splits.length >= 4 && (
+        <p className="text-xs text-orange-500 mb-2">
+          Maximum 4 splits reached. Cannot add more.
+        </p>
+      )}
+
+      {splits.length + (existingSplitCount || 0) < 4 && (
         <button
           type="button"
           onClick={() =>

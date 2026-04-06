@@ -56,6 +56,14 @@ export function useCalendarExamDrag(
     existingDate: string;
   } | null>(null);
 
+  const [remainingSplitsDialogOpen, setRemainingSplitsDialogOpen] =
+    useState(false);
+  const [remainingSplitsInfo, setRemainingSplitsInfo] = useState<{
+    courseCode: string;
+    splitIds: number[];
+    splitCount: number;
+  } | null>(null);
+
   function handleDismissCapacityWarning() {
     setCapacityWarningOpen(false);
     setCapacityWarningInfo(null);
@@ -113,7 +121,7 @@ export function useCalendarExamDrag(
     newDateStr: string | null,
     allExams: Exam[],
   ): { hasConflict: boolean; conflictingExam?: Exam } {
-    // Find ALL splits for this course
+    // ALL splits for this course
     const sameCourseExams = allExams.filter(
       (e: Exam) => e.courseCode === exam.courseCode,
     );
@@ -336,6 +344,23 @@ export function useCalendarExamDrag(
     // fetch fresh data from backend
     await fetchDaysWithExams();
 
+    if (pendingMove?.exam && rescheduleExams) {
+      const remainingSplits = rescheduleExams.filter(
+        (e) =>
+          e.courseCode === pendingMove.exam.courseCode &&
+          e.timeColumnId === "0",
+      );
+
+      if (remainingSplits.length >= 2) {
+        setRemainingSplitsInfo({
+          courseCode: pendingMove.exam.courseCode,
+          splitIds: remainingSplits.map((s) => s.id),
+          splitCount: remainingSplits.length,
+        });
+        setRemainingSplitsDialogOpen(true);
+      }
+    }
+
     // auto-merge with fresh state
     if (shouldAutoMerge && autoMergeExam) {
       await autoMergeSameDayTimeSplits(autoMergeExam, autoMergeDateStr);
@@ -362,5 +387,9 @@ export function useCalendarExamDrag(
     splitConflictOpen,
     splitConflictInfo,
     handleDismissSplitConflict,
+    remainingSplitsDialogOpen,
+    remainingSplitsInfo,
+    setRemainingSplitsDialogOpen,
+    setRemainingSplitsInfo,
   };
 }
