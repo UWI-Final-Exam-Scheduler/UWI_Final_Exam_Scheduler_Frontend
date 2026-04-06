@@ -5,6 +5,7 @@ import { splitExam, mergeExam } from "../lib/examFetch";
 export function useExamSplitMerge(
   exams: Exam[],
   setExams: Dispatch<SetStateAction<Exam[]>>,
+  refetch?: () => Promise<void>,
 ) {
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
@@ -44,15 +45,16 @@ export function useExamSplitMerge(
         ...exam,
         venue_id: activeExam.venue_id,
         time: activeExam.time,
-        timeColumnId: String(activeExam.time),
+        timeColumnId: activeExam.timeColumnId ?? String(activeExam.time),
         date: activeExam.date,
         exam_date: activeExam.exam_date,
       }));
       setExams((prev) => [
-        ...prev.filter((e) => e.courseCode !== activeExam.courseCode),
+        ...prev.filter((e) => e.id !== activeExam.id),
         ...inheritedExams,
       ]);
       onCloseSplit();
+      await refetch?.();
     } catch (error) {
       console.error("Failed to split exam:", error);
     }
@@ -65,6 +67,7 @@ export function useExamSplitMerge(
         ...prev.filter((e) => !examIds.includes(e.id)),
         ...merged,
       ]);
+      await refetch?.();
     } catch (error) {
       console.error("Failed to merge exams:", error);
     }
@@ -72,7 +75,7 @@ export function useExamSplitMerge(
   }
 
   const examSplits = activeExam
-    ? exams.filter((e) => e.courseCode === activeExam.courseCode)
+    ? exams.filter((e) => e.id !== activeExam.id)
     : [];
 
   return {

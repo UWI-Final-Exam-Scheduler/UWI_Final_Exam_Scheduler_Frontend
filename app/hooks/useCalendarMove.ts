@@ -10,21 +10,21 @@ export function useCalendarMove(
   setRescheduleExams: Dispatch<SetStateAction<Exam[]>>,
 ) {
   async function handleMoveToReschedule(move: PendingMove) {
-    const originalExam = exams.find((e) => String(e.id) === move.examId);
-
-    await rescheduleExam(move.exam.id, 0, null, null, true);
-
+    console.log("moving to reschedule:", move.exam.id, move.exam.courseCode); // DEBUGGING
     const courseCode = move.exam.courseCode;
-
     const splits = exams.filter((e) => e.courseCode === courseCode);
+
+    // Reschedule ALL splits in the backend, not just the dragged one
+    for (const split of splits) {
+      await rescheduleExam(split.id, 0, null, null, true);
+    }
+
     const totalStudents = splits.reduce(
       (sum, s) => sum + s.number_of_students,
       0,
     );
 
-    setExams((prev) =>
-      prev.filter((e) => e.courseCode !== move.exam.courseCode),
-    );
+    setExams((prev) => prev.filter((e) => e.courseCode !== courseCode));
     setRescheduleExams((prev) => [
       ...prev,
       {
@@ -38,7 +38,7 @@ export function useCalendarMove(
     addLog({
       action: "Move Exam to Reschedule",
       entityId: courseCode,
-      oldValue: `Time: ${originalExam?.timeColumnId}, Date: ${originalExam?.exam_date}, Venue: ${originalExam?.venue_id}`,
+      oldValue: `Time: ${move.exam.timeColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.exam.venue_id}`,
       newValue: "To Be Rescheduled",
     });
 

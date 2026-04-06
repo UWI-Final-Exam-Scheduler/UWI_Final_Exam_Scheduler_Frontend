@@ -34,6 +34,7 @@ export function useRefineCalendar(date: Date | undefined) {
   const rescheduleSplitMerge = useExamSplitMerge(
     fetchState.rescheduleExams,
     fetchState.setRescheduleExams,
+    fetchState.fetchRescheduleExams,
   );
 
   return {

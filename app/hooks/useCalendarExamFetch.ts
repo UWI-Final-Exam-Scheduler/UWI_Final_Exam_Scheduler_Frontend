@@ -40,13 +40,22 @@ export function useCalendarExamFetch(date: Date | undefined) {
       .catch((err: unknown) => console.error("Failed to fetch venues:", err));
   }, []);
 
+  const fetchRescheduleExams = async () => {
+    try {
+      const data = await fetchExamstobeRescheduled();
+      console.log(
+        "reschedule from DB:",
+        data.map((e: Exam) => ({ id: e.id, courseCode: e.courseCode })),
+      );
+      setRescheduleExams(data);
+    } catch (err) {
+      console.error("Failed to fetch reschedule exams:", err);
+      setRescheduleExams([]);
+    }
+  };
+
   useEffect(() => {
-    fetchExamstobeRescheduled()
-      .then(setRescheduleExams)
-      .catch((err) => {
-        console.error("Failed to fetch reschedule exams:", err);
-        setRescheduleExams([]);
-      });
+    fetchRescheduleExams();
   }, []);
 
   useEffect(() => {
@@ -80,6 +89,7 @@ export function useCalendarExamFetch(date: Date | undefined) {
     setExams,
     rescheduleExams,
     setRescheduleExams,
+    fetchRescheduleExams,
     haveExamsDay,
     isLoading,
     fetchDaysWithExams,

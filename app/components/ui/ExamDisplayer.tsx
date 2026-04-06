@@ -52,9 +52,7 @@ export default function ExamDisplayer({
         />
       )}
       <SplitExamDialog
-        key={
-          activeExam?.courseCode ? `${activeExam.courseCode}-split` : undefined
-        }
+        key={activeExam?.id != null ? `split-${activeExam.id}` : undefined}
         exam={activeExam}
         open={splitDialogOpen}
         onConfirm={onSplitConfirm}
@@ -62,9 +60,7 @@ export default function ExamDisplayer({
       />
 
       <MergeExamDialog
-        key={
-          activeExam?.courseCode ? `${activeExam.courseCode}-merge` : undefined
-        }
+        key={activeExam?.id != null ? `merge-${activeExam.id}` : "merge-closed"}
         exam={activeExam}
         splits={examSplits}
         open={mergeDialogOpen}

@@ -183,8 +183,8 @@ export default function CalendarDayPicker({
         )}
         <SplitExamDialog
           key={
-            rescheduleActiveExam?.courseCode
-              ? `${rescheduleActiveExam.courseCode}-reschedule-split`
+            rescheduleActiveExam?.id != null
+              ? `split-reschedule-${rescheduleActiveExam.id}`
               : undefined
           }
           exam={rescheduleActiveExam}
@@ -194,9 +194,9 @@ export default function CalendarDayPicker({
         />
         <MergeExamDialog
           key={
-            rescheduleActiveExam?.courseCode
-              ? `${rescheduleActiveExam.courseCode}-reschedule-merge`
-              : undefined
+            rescheduleActiveExam?.id != null
+              ? `merge-reschedule-${rescheduleActiveExam.id}`
+              : "reschedule-merge-closed"
           }
           exam={rescheduleActiveExam}
           splits={rescheduleExamSplits}

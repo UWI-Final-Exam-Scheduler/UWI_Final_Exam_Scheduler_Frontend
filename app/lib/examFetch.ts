@@ -92,7 +92,11 @@ export async function mergeExam(examIds: number[]) {
     method: "POST",
     body: JSON.stringify({ examIds }),
   });
-  if (!response.ok) throw new Error("Failed to merge exams");
+  if (!response.ok) {
+    const body = await response.text();
+    console.error("Merge exam failed:", response.status, body); // ← add this
+    throw new Error("Failed to merge exams");
+  }
   const data = await response.json();
   return (data ?? []).map((exam: Exam) => ({
     ...exam,

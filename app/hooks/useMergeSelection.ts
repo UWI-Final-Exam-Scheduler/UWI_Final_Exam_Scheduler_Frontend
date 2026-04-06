@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Exam } from "../components/types/calendarTypes";
 
 export function useMergeSelection(splits: Exam[]) {
