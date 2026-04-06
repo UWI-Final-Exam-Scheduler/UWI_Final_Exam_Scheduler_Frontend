@@ -63,6 +63,59 @@ export function useCalendarExamDrag(
     setSplitConflictInfo(null);
   }
 
+  // ================================
+  // 🔍 HELPER: Check if move violates split constraints
+  // ================================
+  // Line 65 (INSERT BEFORE handleExamDrag)
+  function checkSplitConflict(
+    exam: Exam,
+    newTimeColumnId: string,
+    newDateStr: string | null,
+    allExams: Exam[],
+  ): { hasConflict: boolean; conflictingExam?: Exam } {
+    // Find ALL splits for this course (both calendar and reschedule)
+    const sameCourseExams = allExams.filter(
+      (e) => e.courseCode === exam.courseCode,
+    );
+
+    // If only 1, no conflict possible
+    if (sameCourseExams.length <= 1) {
+      return { hasConflict: false };
+    }
+
+    // Get OTHER splits (not the one being moved)
+    const otherSplits = sameCourseExams.filter(
+      (e) => String(e.id) !== String(exam.id),
+    );
+
+    // Check each split to see if it conflicts
+    for (const split of otherSplits) {
+      // Skip if this split is in reschedule column (will be merged later)
+      if (split.timeColumnId === "0") {
+        continue;
+      }
+
+      // If trying to move to reschedule, no conflict (merge happens after)
+      if (newTimeColumnId === "0") {
+        continue;
+      }
+
+      // Both are being scheduled - must match date AND time
+      const moveToTime = Number(newTimeColumnId);
+      const moveToDate = newDateStr;
+
+      if (split.time !== moveToTime || split.exam_date !== moveToDate) {
+        // CONFLICT! One split tries different time/date than another
+        return {
+          hasConflict: true,
+          conflictingExam: split,
+        };
+      }
+    }
+
+    return { hasConflict: false };
+  }
+
   function handleExamDrag(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
@@ -114,44 +167,36 @@ export function useCalendarExamDrag(
     // ================================
     // 🚨 2. SPLIT CONFLICT CHECK
     // ================================
-    const sameCourseExams = [...exams, ...rescheduleExams].filter(
-      (e) => e.courseCode === exam.courseCode,
-    );
+    // ================================
+    // 🚨 2. SPLIT CONFLICT CHECK (comes BEFORE capacity check)
+    // ================================
+    // Line 114-155 (REPLACE THIS ENTIRE SECTION)
 
-    // ✅ ONLY care if actually split
-    if (sameCourseExams.length > 1) {
-      // only scheduled ones (ignore reschedule column)
-      const scheduledSplits = sameCourseExams.filter(
-        (e) => e.exam_date && e.time !== 0,
-      );
+    // Build the new date string to check against
+    const newDateStr =
+      newTimeColumnId !== "0" && selectedDateRef.current
+        ? `${selectedDateRef.current.getFullYear()}-${String(
+            selectedDateRef.current.getMonth() + 1,
+          ).padStart(2, "0")}-${String(
+            selectedDateRef.current.getDate(),
+          ).padStart(2, "0")}`
+        : null;
 
-      // if none scheduled yet → allow freely
-      if (scheduledSplits.length > 0) {
-        const selectedDateStr = selectedDateRef.current
-          ? `${selectedDateRef.current.getFullYear()}-${String(
-              selectedDateRef.current.getMonth() + 1,
-            ).padStart(2, "0")}-${String(
-              selectedDateRef.current.getDate(),
-            ).padStart(2, "0")}`
-          : null;
+    // Check if this move violates split constraints
+    const splitCheck = checkSplitConflict(exam, newTimeColumnId, newDateStr, [
+      ...exams,
+      ...rescheduleExams,
+    ]);
 
-        const hasConflict = scheduledSplits.some((e) => {
-          return (
-            e.time !== Number(newTimeColumnId) ||
-            (selectedDateStr && e.exam_date !== selectedDateStr)
-          );
-        });
-
-        if (hasConflict && newTimeColumnId !== "0") {
-          setSplitConflictInfo({
-            courseCode: exam.courseCode,
-            existingTime: scheduledSplits[0].time,
-            existingDate: scheduledSplits[0].exam_date,
-          });
-          setSplitConflictOpen(true);
-          return;
-        }
-      }
+    if (splitCheck.hasConflict && splitCheck.conflictingExam) {
+      // Show warning dialog
+      setSplitConflictInfo({
+        courseCode: exam.courseCode,
+        existingTime: splitCheck.conflictingExam.time,
+        existingDate: splitCheck.conflictingExam.exam_date,
+      });
+      setSplitConflictOpen(true);
+      return; // ❗ STOP HERE - don't proceed
     }
 
     // ================================
@@ -194,7 +239,11 @@ export function useCalendarExamDrag(
     if (isMovingToReschedule) {
       await moveActions.handleMoveToReschedule(pendingMove);
     } else if (isMovingFromReschedule && currentDate) {
-      await moveActions.handleMoveFromReschedule(pendingMove, currentDate);
+      await moveActions.handleMoveFromReschedule(
+        pendingMove,
+        currentDate,
+        rescheduleExams,
+      );
     } else {
       await moveActions.handleSameDayTimeChange(pendingMove);
     }

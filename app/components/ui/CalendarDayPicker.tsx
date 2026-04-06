@@ -110,6 +110,8 @@ export default function CalendarDayPicker({
         <SplitConflictDialog
           open={splitConflictOpen}
           courseCode={splitConflictInfo?.courseCode ?? ""}
+          existingTime={splitConflictInfo?.existingTime}
+          existingDate={splitConflictInfo?.existingDate}
           onDismiss={handleDismissSplitConflict}
         />
         <Box className="flex-1" style={{ transition: "all 0.3s ease" }}>

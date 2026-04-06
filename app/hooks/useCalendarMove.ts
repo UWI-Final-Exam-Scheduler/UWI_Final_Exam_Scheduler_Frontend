@@ -41,9 +41,12 @@ export function useCalendarMove(
   async function handleMoveFromReschedule(
     move: PendingMove,
     currentDate: Date,
+    rescheduleExamsList: Exam[],
   ) {
     const newDateStr = formatDatetoString(currentDate);
+    const courseCode = move.exam.courseCode;
 
+    // Step 1: Move this split to calendar
     await rescheduleExam(
       move.exam.id,
       Number(move.toColumnId),
@@ -52,11 +55,40 @@ export function useCalendarMove(
       false,
     );
 
-    setRescheduleExams((prev) =>
-      prev.filter((e) => String(e.id) !== move.examId),
+    // Step 2: Find remaining reschedule splits for this course
+    const otherRescheduleSplits = rescheduleExamsList.filter(
+      (e: Exam) => e.courseCode === courseCode && String(e.id) !== move.examId, // ✅ TYPE: Exam
     );
 
-    setExams((prev) => [
+    // Step 3: If other reschedule splits exist, MERGE them into one
+    if (otherRescheduleSplits.length > 0) {
+      // Merge all remaining splits into a single exam
+      const mergedExam = await rescheduleExam(
+        otherRescheduleSplits[0].id,
+        0,
+        null,
+        null,
+        true, // This merges them
+      );
+
+      setRescheduleExams((prev: Exam[]) => [
+        // Remove all splits of this course
+        ...prev.filter((e: Exam) => e.courseCode !== courseCode),
+        // Add the newly merged exam
+        {
+          ...mergedExam,
+          timeColumnId: "0",
+        },
+      ]);
+    } else {
+      // No other splits, just remove this one from reschedule
+      setRescheduleExams((prev: Exam[]) =>
+        prev.filter((e: Exam) => String(e.id) !== move.examId),
+      );
+    }
+
+    // Step 4: Add moved exam to calendar
+    setExams((prev: Exam[]) => [
       ...prev,
       {
         ...move.exam,
@@ -69,12 +101,12 @@ export function useCalendarMove(
 
     addLog({
       action: "Move Exam from Reschedule",
-      entityId: move.exam.courseCode,
+      entityId: courseCode,
       oldValue: "To Be Rescheduled",
       newValue: `Time: ${move.toColumnId}, Date: ${newDateStr}, Venue: ${move.toVenueId}`,
     });
 
-    toast.success("Exam Rescheduled ✅");
+    toast.success("Exam Rescheduled & splits merged ✅");
   }
 
   async function handleSameDayTimeChange(move: PendingMove) {
