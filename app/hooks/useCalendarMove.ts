@@ -1,5 +1,9 @@
 import { Exam, PendingMove } from "../components/types/calendarTypes";
-import { formatDatetoString, rescheduleExam } from "../lib/examFetch";
+import {
+  formatDatetoString,
+  rescheduleExam,
+  mergeExam,
+} from "../lib/examFetch";
 import { Dispatch, SetStateAction } from "react";
 import toast from "react-hot-toast";
 import { addLog } from "@/app/lib/activityLog";
@@ -57,31 +61,41 @@ export function useCalendarMove(
 
     // Step 2: Find remaining reschedule splits for this course
     const otherRescheduleSplits = rescheduleExamsList.filter(
-      (e: Exam) => e.courseCode === courseCode && String(e.id) !== move.examId, // ✅ TYPE: Exam
+      (e: Exam) => e.courseCode === courseCode && String(e.id) !== move.examId,
     );
 
-    // Step 3: If other reschedule splits exist, MERGE them into one
-    if (otherRescheduleSplits.length > 0) {
-      // Merge all remaining splits into a single exam
-      const mergedExam = await rescheduleExam(
-        otherRescheduleSplits[0].id,
-        0,
-        null,
-        null,
-        true, // This merges them
-      );
+    // Step 3: Handle remaining splits
+    // ✅ Only merge if there are 2 or more splits to merge
+    if (otherRescheduleSplits.length >= 2) {
+      // Multiple splits exist - MERGE them together
+      try {
+        const mergedExams = await mergeExam(
+          otherRescheduleSplits.map((e: Exam) => e.id),
+        );
+        const mergedExam = mergedExams[0];
 
-      setRescheduleExams((prev: Exam[]) => [
-        // Remove all splits of this course
-        ...prev.filter((e: Exam) => e.courseCode !== courseCode),
-        // Add the newly merged exam
-        {
-          ...mergedExam,
-          timeColumnId: "0",
-        },
-      ]);
+        setRescheduleExams((prev: Exam[]) => [
+          // Remove all old splits of this course
+          ...prev.filter((e: Exam) => e.courseCode !== courseCode),
+          // Add the merged exam
+          {
+            ...mergedExam,
+            timeColumnId: "0",
+          },
+        ]);
+
+        toast.success(`✅ Merged ${otherRescheduleSplits.length} exam splits`);
+      } catch (error) {
+        console.error("Merge failed:", error);
+        toast.error("Failed to merge exam splits");
+      }
+    } else if (otherRescheduleSplits.length === 1) {
+      // Only 1 split remaining - just remove it (no merge needed)
+      setRescheduleExams((prev: Exam[]) =>
+        prev.filter((e: Exam) => e.courseCode !== courseCode),
+      );
     } else {
-      // No other splits, just remove this one from reschedule
+      // No other splits - nothing to do
       setRescheduleExams((prev: Exam[]) =>
         prev.filter((e: Exam) => String(e.id) !== move.examId),
       );

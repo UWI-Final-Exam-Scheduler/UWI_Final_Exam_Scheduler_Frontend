@@ -7,6 +7,8 @@ import {
   Venue,
 } from "../components/types/calendarTypes";
 import { ALL_COLUMNS } from "../components/constants/columns";
+import { toast } from "react-hot-toast";
+import { mergeExam } from "../lib/examFetch";
 
 type CapacityWarningInfo = {
   courseCode: string;
@@ -63,19 +65,57 @@ export function useCalendarExamDrag(
     setSplitConflictInfo(null);
   }
 
-  // ================================
-  // 🔍 HELPER: Check if move violates split constraints
-  // ================================
-  // Line 65 (INSERT BEFORE handleExamDrag)
+  async function autoMergeSameDayTimeSplits(exam: Exam, scheduledDate: string) {
+    // Find all splits for this course
+    const courseSplits = [...exams, ...rescheduleExams].filter(
+      (e: Exam) => e.courseCode === exam.courseCode,
+    );
+
+    // If only 1 split or less, nothing to merge
+    if (courseSplits.length <= 1) {
+      return;
+    }
+
+    // Find splits scheduled on the SAME day, time, AND venue (not in reschedule)
+    const splitsOnSameDayTime = courseSplits.filter(
+      (e: Exam) =>
+        e.timeColumnId !== "0" && // Not in reschedule
+        e.exam_date === scheduledDate && // Same date
+        e.time === exam.time && // Same time
+        e.venue_id === exam.venue_id, // Same venue
+    );
+
+    // If 2 or more splits match, merge them
+    if (splitsOnSameDayTime.length >= 2) {
+      console.log(
+        `Auto-merging ${splitsOnSameDayTime.length} splits of ${exam.courseCode}`,
+      );
+
+      const splitIds = splitsOnSameDayTime.map((e: Exam) => e.id);
+
+      try {
+        // mergeing api
+        await mergeExam(splitIds);
+        toast.success(
+          `Auto-merged ${splitIds.length} splits of ${exam.courseCode}`,
+        );
+      } catch (error) {
+        console.error("Auto-merge failed:", error);
+        toast.error("Failed to auto-merge splits");
+      }
+    }
+  }
+
+  // Check if move violates split constraints
   function checkSplitConflict(
     exam: Exam,
     newTimeColumnId: string,
     newDateStr: string | null,
     allExams: Exam[],
   ): { hasConflict: boolean; conflictingExam?: Exam } {
-    // Find ALL splits for this course (both calendar and reschedule)
+    // Find ALL splits for this course
     const sameCourseExams = allExams.filter(
-      (e) => e.courseCode === exam.courseCode,
+      (e: Exam) => e.courseCode === exam.courseCode,
     );
 
     // If only 1, no conflict possible
@@ -83,36 +123,57 @@ export function useCalendarExamDrag(
       return { hasConflict: false };
     }
 
+    // If trying to move TO reschedule, no conflict
+    if (newTimeColumnId === "0") {
+      return { hasConflict: false };
+    }
+
     // Get OTHER splits (not the one being moved)
     const otherSplits = sameCourseExams.filter(
-      (e) => String(e.id) !== String(exam.id),
+      (e: Exam) => String(e.id) !== String(exam.id),
     );
 
-    // Check each split to see if it conflicts
+    // Check each other split
     for (const split of otherSplits) {
-      // Skip if this split is in reschedule column (will be merged later)
+      // Skip if this split is in reschedule (not scheduled yet)
       if (split.timeColumnId === "0") {
         continue;
       }
 
-      // If trying to move to reschedule, no conflict (merge happens after)
-      if (newTimeColumnId === "0") {
-        continue;
-      }
-
-      // Both are being scheduled - must match date AND time
+      //compare the target location
       const moveToTime = Number(newTimeColumnId);
       const moveToDate = newDateStr;
+      const splitTime = split.time;
+      const splitDate = split.exam_date;
 
-      if (split.time !== moveToTime || split.exam_date !== moveToDate) {
-        // CONFLICT! One split tries different time/date than another
+      // ONLY conflict if trying to move to DIFFERENT day/time
+      // If SAME day/time/venue, they should MERGE (not conflict)
+      if (splitDate !== moveToDate || splitTime !== moveToTime) {
+        //DIFFERENT day or time = CONFLICT!
+        console.log("SPLIT CONFLICT: Different day/time detected", {
+          // debugging here
+          courseCode: exam.courseCode,
+          targetDate: moveToDate,
+          targetTime: moveToTime,
+          existingDate: splitDate,
+          existingTime: splitTime,
+        });
         return {
           hasConflict: true,
           conflictingExam: split,
         };
+      } else {
+        // SAME day/time = Will auto-merge later (not a conflict)
+        console.log("Same day/time - will auto-merge after capacity check", {
+          // debugging here
+          courseCode: exam.courseCode,
+          date: moveToDate,
+          time: moveToTime,
+        });
       }
     }
 
+    // no conflicts were found here
     return { hasConflict: false };
   }
 
@@ -138,9 +199,7 @@ export function useCalendarExamDrag(
     const toColumn = ALL_COLUMNS.find((c) => c.id === newTimeColumnId);
     if (!fromColumn || !toColumn) return;
 
-    // ================================
-    // 🚨 1. CAPACITY CHECK
-    // ================================
+    // capacity check (only if moving to a specific venue, not to reschedule)
     if (newVenueId !== null && toColumn.id !== "0") {
       if (
         wouldExceedCapacity(
@@ -160,19 +219,12 @@ export function useCalendarExamDrag(
         });
 
         setCapacityWarningOpen(true);
-        return; // ❗ STOP HERE
+        return; // return early - don't proceed with move or split check
       }
     }
 
-    // ================================
-    // 🚨 2. SPLIT CONFLICT CHECK
-    // ================================
-    // ================================
-    // 🚨 2. SPLIT CONFLICT CHECK (comes BEFORE capacity check)
-    // ================================
-    // Line 114-155 (REPLACE THIS ENTIRE SECTION)
-
-    // Build the new date string to check against
+    // split conflict check
+    // build date
     const newDateStr =
       newTimeColumnId !== "0" && selectedDateRef.current
         ? `${selectedDateRef.current.getFullYear()}-${String(
@@ -189,19 +241,21 @@ export function useCalendarExamDrag(
     ]);
 
     if (splitCheck.hasConflict && splitCheck.conflictingExam) {
-      // Show warning dialog
+      console.log("SPLIT CONFLICT DETECTED:", {
+        course: exam.courseCode,
+        existingTime: splitCheck.conflictingExam.time,
+        existingDate: splitCheck.conflictingExam.exam_date,
+      });
       setSplitConflictInfo({
         courseCode: exam.courseCode,
         existingTime: splitCheck.conflictingExam.time,
         existingDate: splitCheck.conflictingExam.exam_date,
       });
       setSplitConflictOpen(true);
-      return; // ❗ STOP HERE - don't proceed
+      return; // stop dont continue
     }
 
-    // ================================
-    // ✅ 3. SAFE → proceed
-    // ================================
+    // once split is safe then proceed
     const toVenueName =
       newVenueId !== null
         ? (venues.find((v) => v.id === newVenueId)?.name ?? String(newVenueId))
@@ -231,10 +285,13 @@ export function useCalendarExamDrag(
     if (!pendingMove) return;
 
     const isMovingToReschedule = pendingMove.toColumnId === "0";
-
     const isMovingFromReschedule = pendingMove.fromColumnId === "0";
-
     const currentDate = selectedDateRef.current;
+
+    // store info needed for later
+    let shouldAutoMerge = false;
+    let autoMergeDateStr = "";
+    let autoMergeExam: Exam | null = null;
 
     if (isMovingToReschedule) {
       await moveActions.handleMoveToReschedule(pendingMove);
@@ -244,11 +301,45 @@ export function useCalendarExamDrag(
         currentDate,
         rescheduleExams,
       );
+
+      //auto-merge AFTER state refresh
+      shouldAutoMerge = true;
+      autoMergeDateStr = `${currentDate.getFullYear()}-${String(
+        currentDate.getMonth() + 1,
+      ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
+      autoMergeExam = {
+        ...pendingMove.exam,
+        time: Number(pendingMove.toColumnId),
+        timeColumnId: pendingMove.toColumnId,
+        venue_id: pendingMove.toVenueId!,
+      };
     } else {
       await moveActions.handleSameDayTimeChange(pendingMove);
+
+      // auto-merge AFTER state refresh
+      if (selectedDateRef.current && pendingMove.toVenueId) {
+        shouldAutoMerge = true;
+        autoMergeDateStr = `${selectedDateRef.current.getFullYear()}-${String(
+          selectedDateRef.current.getMonth() + 1,
+        ).padStart(2, "0")}-${String(
+          selectedDateRef.current.getDate(),
+        ).padStart(2, "0")}`;
+        autoMergeExam = {
+          ...pendingMove.exam,
+          time: Number(pendingMove.toColumnId),
+          timeColumnId: pendingMove.toColumnId,
+          venue_id: pendingMove.toVenueId,
+        };
+      }
     }
 
+    // fetch fresh data from backend
     await fetchDaysWithExams();
+
+    // auto-merge with fresh state
+    if (shouldAutoMerge && autoMergeExam) {
+      await autoMergeSameDayTimeSplits(autoMergeExam, autoMergeDateStr);
+    }
 
     setPendingMove(null);
     setAlertOpen(false);

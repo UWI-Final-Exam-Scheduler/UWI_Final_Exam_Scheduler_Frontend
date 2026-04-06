@@ -30,14 +30,19 @@ export default function SplitConflictDialog({
           <p className="text-sm text-yellow-700 mb-4">
             <strong>{courseCode}</strong> has multiple splits.
           </p>
-          {existingDate && existingTime && (
+          {existingDate && existingTime ? (
             <p className="text-sm text-yellow-800 mb-4">
               Existing splits are scheduled on{" "}
               <strong>
                 {existingDate} at {existingTime}
               </strong>
             </p>
+          ) : (
+            <p className="text-sm text-yellow-700 mb-4">
+              Some splits are already scheduled on different times.
+            </p>
           )}
+
           <div className="rounded-lg bg-yellow-100 border border-yellow-200 px-4 py-3 text-sm text-yellow-800 mb-4">
             All splits must be scheduled on the{" "}
             <strong>same day and time</strong>.
