@@ -3,7 +3,7 @@ import { DayPicker } from "react-day-picker";
 import { useState } from "react";
 import "react-day-picker/style.css";
 import ExamDisplayer from "./ExamDisplayer";
-import { Box } from "@radix-ui/themes";
+import { Box, Spinner } from "@radix-ui/themes";
 import CustomButton from "./CustomButton";
 import TimeColumn from "./TimeColumn";
 import { DndContext } from "@dnd-kit/core";
@@ -41,6 +41,7 @@ export default function CalendarDayPicker({
     handleConfirmMove,
     handleCancelMove,
     isLoading,
+    isInitialLoading,
     activeExam,
     examSplits,
     splitDialogOpen,
@@ -67,6 +68,7 @@ export default function CalendarDayPicker({
     splitConflictOpen,
     splitConflictInfo,
     handleDismissSplitConflict,
+    allScheduledExams, // ← ADD THIS LINE
   } = useRefineCalendar(selected);
 
   // Fetch exams on day before and day after selected date
@@ -173,6 +175,7 @@ export default function CalendarDayPicker({
                 onCloseMerge={onCloseMerge}
                 clashColorMap={colorMap} //
                 clashExamsMap={clashExamsMap}
+                rescheduleExams={rescheduleExams ?? []}
               />
             </div>
           )}
@@ -180,18 +183,41 @@ export default function CalendarDayPicker({
 
         {rescheduleColumn && (
           <aside className="w-48 shrink-0 sticky top-4 self-start">
-            <TimeColumn
-              column={rescheduleColumn}
-              exams={rescheduleExams ?? []}
-              allExams={rescheduleExams ?? []}
-              isLoading={isLoading}
-              onSplitExam={onRescheduleExamSplit}
-              onMergeExam={onRescheduleExamMerge}
-              clashColorMap={colorMap}
-              clashExamsMap={clashExamsMap}
-            />
+            {isInitialLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="text-center">
+                  <Spinner className="mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">
+                    Loading Reschedule Column...
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <TimeColumn
+                column={rescheduleColumn}
+                exams={rescheduleExams ?? []}
+                allExams={(() => {
+                  const combined = [
+                    ...(allScheduledExams ?? []),
+                    ...(rescheduleExams ?? []),
+                  ];
+                  const seen = new Set<number>();
+                  return combined.filter((exam) => {
+                    if (seen.has(exam.id)) return false;
+                    seen.add(exam.id);
+                    return true;
+                  });
+                })()}
+                isLoading={isLoading}
+                onSplitExam={onRescheduleExamSplit}
+                onMergeExam={onRescheduleExamMerge}
+                clashColorMap={colorMap}
+                clashExamsMap={clashExamsMap}
+              />
+            )}
           </aside>
         )}
+
         <SplitExamDialog
           key={
             rescheduleActiveExam?.id != null
@@ -202,6 +228,11 @@ export default function CalendarDayPicker({
           open={rescheduleSplitDialogOpen}
           onConfirm={onRescheduleExamSplitConfirm}
           onCancel={onCloseRescheduleSplit}
+          existingSplitCount={
+            rescheduleExams?.filter(
+              (e) => e.courseCode === rescheduleActiveExam?.courseCode,
+            ).length
+          }
         />
         <MergeExamDialog
           key={
