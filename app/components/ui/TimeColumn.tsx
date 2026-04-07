@@ -36,6 +36,9 @@ function DroppableSlot({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
+  const getExamDragId = (exam: Exam, index: number) =>
+    `${droppableId}::${exam.id}::${exam.courseCode}::${exam.venue_id}::${exam.time}::${index}`;
+
   return (
     <div className="flex flex-col gap-2">
       {label && (
@@ -68,9 +71,10 @@ function DroppableSlot({
         {exams.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-2">Drop here</p>
         ) : (
-          exams.map((exam) => (
+          exams.map((exam, index) => (
             <ExamCardDnD
-              key={exam.id}
+              key={getExamDragId(exam, index)}
+              dragId={getExamDragId(exam, index)}
               exam={exam}
               allExams={allExams}
               isReschedule={isReschedule}

@@ -9,6 +9,7 @@ import SplitExamDialog from "./SplitExamDialog";
 export default function ExamDisplayer({
   selectedDay,
   exams,
+  rescheduleExams,
   columns,
   venues,
   alertOpen,
@@ -52,19 +53,22 @@ export default function ExamDisplayer({
         />
       )}
       <SplitExamDialog
-        key={
-          activeExam?.courseCode ? `${activeExam.courseCode}-split` : undefined
-        }
+        key={activeExam?.id != null ? `split-${activeExam.id}` : undefined}
         exam={activeExam}
         open={splitDialogOpen}
         onConfirm={onSplitConfirm}
         onCancel={onCloseSplit}
+        existingSplitCount={
+          [...exams, ...rescheduleExams].filter(
+            (e) =>
+              e.courseCode === activeExam?.courseCode &&
+              String(e.id) !== String(activeExam?.id),
+          ).length
+        }
       />
 
       <MergeExamDialog
-        key={
-          activeExam?.courseCode ? `${activeExam.courseCode}-merge` : undefined
-        }
+        key={activeExam?.id != null ? `merge-${activeExam.id}` : "merge-closed"}
         exam={activeExam}
         splits={examSplits}
         open={mergeDialogOpen}
@@ -79,7 +83,7 @@ export default function ExamDisplayer({
               column={timecolumn}
               venues={venues}
               isLoading={isLoading}
-              allExams={exams}
+              allExams={[...(exams ?? []), ...(rescheduleExams ?? [])]}
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
               exams={(exams ?? []).filter(

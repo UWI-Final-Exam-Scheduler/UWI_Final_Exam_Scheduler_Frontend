@@ -1,14 +1,19 @@
 import { useState, Dispatch, SetStateAction } from "react";
 import { Exam } from "../components/types/calendarTypes";
 import { splitExam, mergeExam } from "../lib/examFetch";
+import { toast } from "react-hot-toast";
 
 export function useExamSplitMerge(
   exams: Exam[],
   setExams: Dispatch<SetStateAction<Exam[]>>,
+  rescheduleExams: Exam[],
+  setRescheduleExams: Dispatch<SetStateAction<Exam[]>>,
+  refetch?: () => Promise<void>,
 ) {
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [activeExam, setActiveExam] = useState<Exam | null>(null);
+  const isReschedule = activeExam?.timeColumnId === "0";
 
   function onSplit(exam: Exam) {
     setActiveExam(exam);
@@ -44,35 +49,75 @@ export function useExamSplitMerge(
         ...exam,
         venue_id: activeExam.venue_id,
         time: activeExam.time,
-        timeColumnId: String(activeExam.time),
+        timeColumnId: activeExam.timeColumnId ?? String(activeExam.time),
         date: activeExam.date,
         exam_date: activeExam.exam_date,
       }));
-      setExams((prev) => [
-        ...prev.filter((e) => e.courseCode !== activeExam.courseCode),
-        ...inheritedExams,
-      ]);
+      if (isReschedule) {
+        setRescheduleExams((prev) => [
+          ...prev.filter((e) => e.id !== activeExam.id),
+          ...inheritedExams.map((e: Exam) => ({ ...e, timeColumnId: "0" })),
+        ]);
+      } else {
+        setExams((prev) => [
+          ...prev.filter((e) => e.id !== activeExam.id),
+          ...inheritedExams,
+        ]);
+      }
       onCloseSplit();
+      await refetch?.();
     } catch (error) {
       console.error("Failed to split exam:", error);
     }
   }
 
-  async function onMergeConfirm(examIds: number[]) {
+  async function onMergeConfirm(examIds: number[], moveToReschedule = false) {
     try {
       const merged = await mergeExam(examIds);
-      setExams((prev) => [
-        ...prev.filter((e) => !examIds.includes(e.id)),
-        ...merged,
-      ]);
+
+      if (moveToReschedule) {
+        // if there is overflow, move merged exam to reschedule
+        if (isReschedule) {
+          setRescheduleExams((prev) => [
+            ...prev.filter((e) => !examIds.includes(e.id)),
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        } else {
+          // Remove from calendar, add to reschedule
+          setExams((prev) => prev.filter((e) => !examIds.includes(e.id)));
+          setRescheduleExams((prev) => [
+            ...prev,
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        }
+        toast.success("Merged exam moved to reschedule due to capacity");
+      } else {
+        // Normal merge (no overflow)
+        if (isReschedule) {
+          setRescheduleExams((prev) => [
+            ...prev.filter((e) => !examIds.includes(e.id)),
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        } else {
+          setExams((prev) => [
+            ...prev.filter((e) => !examIds.includes(e.id)),
+            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+          ]);
+        }
+        toast.success("Exams merged successfully");
+      }
+
+      await refetch?.();
     } catch (error) {
       console.error("Failed to merge exams:", error);
+      toast.error("Failed to merge exams");
     }
     onCloseMerge();
   }
+  const source = isReschedule ? rescheduleExams : exams;
 
   const examSplits = activeExam
-    ? exams.filter((e) => e.courseCode === activeExam.courseCode)
+    ? source.filter((e) => e.courseCode === activeExam.courseCode)
     : [];
 
   return {

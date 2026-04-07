@@ -22,6 +22,7 @@ export type ClashDetail = {
 
 export type ExamDisplayerProps = {
   exams: Exam[];
+  rescheduleExams: Exam[];
   columns: Column[];
   venues: Venue[];
   selectedDay: Date;
