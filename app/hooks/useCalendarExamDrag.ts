@@ -7,7 +7,6 @@ import {
   Venue,
 } from "../components/types/calendarTypes";
 import { ALL_COLUMNS } from "../components/constants/columns";
-import { toast } from "react-hot-toast";
 
 type CapacityWarningInfo = {
   courseCode: string;
@@ -15,6 +14,12 @@ type CapacityWarningInfo = {
   occupied: number;
   capacity: number;
   incomingStudents: number;
+};
+
+type SplitConflictInfo = {
+  courseCode: string;
+  existingTime: number;
+  existingDate: string;
 };
 
 function parseDroppableId(id: string): {
@@ -31,6 +36,7 @@ function parseDroppableId(id: string): {
 export function useCalendarExamDrag(
   exams: Exam[],
   rescheduleExams: Exam[],
+  allScheduledExams: Exam[],
   selectedDateRef: React.RefObject<Date | undefined>,
   fetchDaysWithExams: () => Promise<void>,
   moveActions: CalendarMoveActions,
@@ -41,8 +47,6 @@ export function useCalendarExamDrag(
     students: number,
   ) => boolean,
   occupancyMap: Record<number, Record<string, number>>,
-  fetchRescheduleExams?: () => Promise<void>,
-  fetchCurrentDayExams?: () => Promise<void>,
 ) {
   const [alertOpen, setAlertOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
@@ -51,109 +55,35 @@ export function useCalendarExamDrag(
   const [capacityWarningInfo, setCapacityWarningInfo] =
     useState<CapacityWarningInfo | null>(null);
   const [splitConflictOpen, setSplitConflictOpen] = useState(false);
-  const [splitConflictInfo, setSplitConflictInfo] = useState<{
-    courseCode: string;
-    existingTime: number;
-    existingDate: string;
-  } | null>(null);
-
-  const [remainingSplitsDialogOpen, setRemainingSplitsDialogOpen] =
-    useState(false);
-  const [remainingSplitsInfo, setRemainingSplitsInfo] = useState<{
-    courseCode: string;
-    splitIds: number[];
-    splitCount: number;
-  } | null>(null);
+  const [splitConflictInfo, setSplitConflictInfo] =
+    useState<SplitConflictInfo | null>(null);
 
   function handleDismissCapacityWarning() {
     setCapacityWarningOpen(false);
     setCapacityWarningInfo(null);
   }
+
   function handleDismissSplitConflict() {
     setSplitConflictOpen(false);
     setSplitConflictInfo(null);
-  }
-
-  // Check if move violates split constraints
-  function checkSplitConflict(
-    exam: Exam,
-    newTimeColumnId: string,
-    newDateStr: string | null,
-    allExams: Exam[],
-  ): { hasConflict: boolean; conflictingExam?: Exam } {
-    // ALL splits for this course
-    const sameCourseExams = allExams.filter(
-      (e: Exam) => e.courseCode === exam.courseCode,
-    );
-
-    // If only 1, no conflict possible
-    if (sameCourseExams.length <= 1) {
-      return { hasConflict: false };
-    }
-
-    // If trying to move TO reschedule, no conflict
-    if (newTimeColumnId === "0") {
-      return { hasConflict: false };
-    }
-
-    // Get OTHER splits (not the one being moved)
-    const otherSplits = sameCourseExams.filter(
-      (e: Exam) => String(e.id) !== String(exam.id),
-    );
-
-    // Check each other split
-    for (const split of otherSplits) {
-      // Skip if this split is in reschedule (not scheduled yet)
-      if (split.timeColumnId === "0") {
-        continue;
-      }
-
-      //compare the target location
-      const moveToTime = Number(newTimeColumnId);
-      const moveToDate = newDateStr;
-      const splitTime = split.time;
-      const splitDate = split.exam_date;
-
-      // ONLY conflict if trying to move to DIFFERENT day/time
-      // If SAME day/time/venue, they should MERGE (not conflict)
-      if (splitDate !== moveToDate || splitTime !== moveToTime) {
-        //DIFFERENT day or time = CONFLICT!
-        console.log("SPLIT CONFLICT: Different day/time detected", {
-          // debugging here
-          courseCode: exam.courseCode,
-          targetDate: moveToDate,
-          targetTime: moveToTime,
-          existingDate: splitDate,
-          existingTime: splitTime,
-        });
-        return {
-          hasConflict: true,
-          conflictingExam: split,
-        };
-      } else {
-        // SAME day/time = Will auto-merge later (not a conflict)
-        console.log("Same day/time - will auto-merge after capacity check", {
-          // debugging here
-          courseCode: exam.courseCode,
-          date: moveToDate,
-          time: moveToTime,
-        });
-      }
-    }
-
-    // no conflicts were found here
-    return { hasConflict: false };
   }
 
   function handleExamDrag(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
 
-    const examId = active.id as string;
+    const draggedExam = active.data.current?.exam as Exam | undefined;
+    const activeId = String(active.id);
+    const rawExamId = activeId.includes("::")
+      ? activeId.split("::")[1]
+      : activeId;
+
+    const examId = rawExamId;
     const { timeColumnId: newTimeColumnId, venueId: newVenueId } =
       parseDroppableId(over.id as string);
 
     const exam =
+      draggedExam ??
       exams.find((e) => String(e.id) === examId) ??
       rescheduleExams.find((e) => String(e.id) === examId);
 
@@ -164,36 +94,12 @@ export function useCalendarExamDrag(
     if (sameTime && sameVenue) return;
 
     const fromColumn = ALL_COLUMNS.find((c) => c.id === exam.timeColumnId);
+
     const toColumn = ALL_COLUMNS.find((c) => c.id === newTimeColumnId);
+
     if (!fromColumn || !toColumn) return;
 
-    // capacity check (only if moving to a specific venue, not to reschedule)
-    if (newVenueId !== null && toColumn.id !== "0") {
-      if (
-        wouldExceedCapacity(
-          newVenueId,
-          newTimeColumnId,
-          exam.number_of_students,
-        )
-      ) {
-        const venue = venues.find((v) => v.id === newVenueId);
-
-        setCapacityWarningInfo({
-          courseCode: exam.courseCode,
-          venueName: venue?.name ?? String(newVenueId),
-          occupied: occupancyMap[newVenueId]?.[newTimeColumnId] ?? 0,
-          capacity: venue?.capacity ?? 0,
-          incomingStudents: exam.number_of_students,
-        });
-
-        setCapacityWarningOpen(true);
-        return; // return early - don't proceed with move or split check
-      }
-    }
-
-    // split conflict check
-    // build date
-    const newDateStr =
+    const targetDateStr =
       newTimeColumnId !== "0" && selectedDateRef.current
         ? `${selectedDateRef.current.getFullYear()}-${String(
             selectedDateRef.current.getMonth() + 1,
@@ -201,29 +107,68 @@ export function useCalendarExamDrag(
             selectedDateRef.current.getDate(),
           ).padStart(2, "0")}`
         : null;
+    const targetTime = newTimeColumnId !== "0" ? Number(newTimeColumnId) : null;
 
-    // Check if this move violates split constraints
-    const splitCheck = checkSplitConflict(exam, newTimeColumnId, newDateStr, [
-      ...exams,
-      ...rescheduleExams,
-    ]);
+    // all scheduled splits of the same course must share the same day and time.
+    if (newTimeColumnId !== "0") {
+      const scheduledById = new Map<number, Exam>();
+      [...allScheduledExams, ...exams].forEach((e) => {
+        if (e.id) {
+          scheduledById.set(e.id, e);
+        }
+      });
 
-    if (splitCheck.hasConflict && splitCheck.conflictingExam) {
-      console.log("SPLIT CONFLICT DETECTED:", {
-        course: exam.courseCode,
-        existingTime: splitCheck.conflictingExam.time,
-        existingDate: splitCheck.conflictingExam.exam_date,
-      });
-      setSplitConflictInfo({
-        courseCode: exam.courseCode,
-        existingTime: splitCheck.conflictingExam.time,
-        existingDate: splitCheck.conflictingExam.exam_date,
-      });
-      setSplitConflictOpen(true);
-      return; // stop dont continue
+      const otherScheduledSplits = Array.from(scheduledById.values()).filter(
+        (e) =>
+          e.courseCode === exam.courseCode &&
+          String(e.id) !== String(exam.id) &&
+          !!e.exam_date,
+      );
+
+      if (otherScheduledSplits.length > 0) {
+        const baseline = otherScheduledSplits[0];
+        const baselineDate = baseline.exam_date;
+        const baselineTime = Number(baseline.time);
+
+        if (targetDateStr !== baselineDate || targetTime !== baselineTime) {
+          setSplitConflictInfo({
+            courseCode: exam.courseCode,
+            existingTime: baselineTime,
+            existingDate: baselineDate,
+          });
+          setSplitConflictOpen(true);
+          return;
+        }
+      }
     }
 
-    // once split is safe then proceed
+    // this is to ensure when moving from reschedule to calendar, a venue must be selected
+
+    if (newVenueId !== null && toColumn.id !== "0") {
+      // At drag-validation time, only enforce capacity for the moved split itself.
+      // Auto-merge capacity is evaluated later in move handlers.
+      const studentsForCapacityCheck = exam.number_of_students;
+
+      if (
+        wouldExceedCapacity(
+          newVenueId,
+          newTimeColumnId,
+          studentsForCapacityCheck,
+        )
+      ) {
+        const venue = venues.find((v) => v.id === newVenueId);
+        setCapacityWarningInfo({
+          courseCode: exam.courseCode,
+          venueName: venue?.name ?? String(newVenueId),
+          occupied: occupancyMap[newVenueId]?.[newTimeColumnId] ?? 0,
+          capacity: venue?.capacity ?? 0,
+          incomingStudents: studentsForCapacityCheck,
+        });
+        setCapacityWarningOpen(true);
+        return;
+      }
+    }
+
     const toVenueName =
       newVenueId !== null
         ? (venues.find((v) => v.id === newVenueId)?.name ?? String(newVenueId))
@@ -237,7 +182,7 @@ export function useCalendarExamDrag(
           : toColumn.title;
 
     setPendingMove({
-      examId,
+      examId: String(exam.id),
       exam,
       fromColumnId: fromColumn.id,
       toColumnId: toColumn.id,
@@ -253,47 +198,20 @@ export function useCalendarExamDrag(
     if (!pendingMove) return;
 
     const isMovingToReschedule = pendingMove.toColumnId === "0";
+
     const isMovingFromReschedule = pendingMove.fromColumnId === "0";
+
     const currentDate = selectedDateRef.current;
 
-    try {
-      if (isMovingToReschedule) {
-        await moveActions.handleMoveToReschedule(pendingMove);
-      } else if (isMovingFromReschedule && currentDate) {
-        await moveActions.handleMoveFromReschedule(
-          pendingMove,
-          currentDate,
-          rescheduleExams,
-        );
-      } else {
-        await moveActions.handleSameDayTimeChange(pendingMove);
-      }
-
-      // *** CRITICAL: Refetch fresh data from backend ***
-      await fetchDaysWithExams();
-      await fetchRescheduleExams?.();
-      await fetchCurrentDayExams?.();
-    } catch (error) {
-      console.error("Move operation failed:", error);
-      toast.error("Failed to move exam");
+    if (isMovingToReschedule) {
+      await moveActions.handleMoveToReschedule(pendingMove);
+    } else if (isMovingFromReschedule && currentDate) {
+      await moveActions.handleMoveFromReschedule(pendingMove, currentDate);
+    } else {
+      await moveActions.handleSameDayTimeChange(pendingMove);
     }
 
-    if (pendingMove?.exam && rescheduleExams) {
-      const remainingSplits = rescheduleExams.filter(
-        (e) =>
-          e.courseCode === pendingMove.exam.courseCode &&
-          e.timeColumnId === "0",
-      );
-
-      if (remainingSplits.length >= 2) {
-        setRemainingSplitsInfo({
-          courseCode: pendingMove.exam.courseCode,
-          splitIds: remainingSplits.map((s) => s.id),
-          splitCount: remainingSplits.length,
-        });
-        setRemainingSplitsDialogOpen(true);
-      }
-    }
+    await fetchDaysWithExams();
 
     setPendingMove(null);
     setAlertOpen(false);
@@ -316,9 +234,5 @@ export function useCalendarExamDrag(
     splitConflictOpen,
     splitConflictInfo,
     handleDismissSplitConflict,
-    remainingSplitsDialogOpen,
-    remainingSplitsInfo,
-    setRemainingSplitsDialogOpen,
-    setRemainingSplitsInfo,
   };
 }

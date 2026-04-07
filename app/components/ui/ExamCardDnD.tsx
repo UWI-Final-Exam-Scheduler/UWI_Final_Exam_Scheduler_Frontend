@@ -6,6 +6,7 @@ import ExamHoverCard from "./ExamHoverCard";
 
 type ExamCardProps = {
   exam: Exam;
+  dragId?: string;
   allExams?: Exam[];
   isReschedule?: boolean;
   onSplitExam?: (exam: Exam) => void;
@@ -16,6 +17,7 @@ type ExamCardProps = {
 
 export default function ExamCardDnD({
   exam,
+  dragId,
   allExams = [],
   isReschedule,
   onSplitExam,
@@ -23,46 +25,53 @@ export default function ExamCardDnD({
   clashColor,
   clashDetail,
 }: ExamCardProps) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: String(exam.id),
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: dragId ?? String(exam.id),
+      data: { exam },
+    });
 
   const style = transform
-    ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
+    ? {
+        transform: `translate(${transform.x}px, ${transform.y}px)`,
+      }
     : undefined;
 
   const hasSplits =
     allExams.filter((e) => e.courseCode === exam.courseCode).length > 1;
+  const splitsForCourse = allExams
+    .filter((e) => e.courseCode === exam.courseCode)
+    .sort((a, b) => a.id - b.id);
+  const splitIndex = splitsForCourse.findIndex((e) => e.id === exam.id) + 1;
+  const splitTotal = splitsForCourse.length;
 
   const card = (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={style}
+      className={`cursor-pointer ${isDragging ? "opacity-0" : "opacity-100"}`}
+    >
       <Card
         variant="surface"
         className="h-7"
         style={clashColor ? { backgroundColor: clashColor } : undefined}
       >
-        <Flex align="center" justify="between">
-          <div className="flex items-center gap-2">
-            <Text size="1" weight="bold">
+        <Flex align="center" justify="between" className="w-full gap-1">
+          <div className="flex min-w-0 items-center gap-1">
+            <Text size="1" weight="bold" className="truncate">
               {exam.courseCode}
             </Text>
-            {hasSplits &&
-              (() => {
-                const splitsForCourse = allExams.filter(
-                  (e) => e.courseCode === exam.courseCode,
-                );
-                const splitIndex =
-                  splitsForCourse.findIndex((e) => e.id === exam.id) + 1;
-                const splitTotal = splitsForCourse.length;
-                return (
-                  <span className="text-xs text-black px-1.5 py-0.5 rounded">
-                    {splitIndex}/{splitTotal}
-                  </span>
-                );
-              })()}
+            {hasSplits && splitIndex > 0 && (
+              <span
+                className={`${isReschedule ? "text-[9px]" : "text-[10px]"} font-bold text-gray-600 whitespace-nowrap`}
+              >
+                Split:{splitIndex}/{splitTotal}
+              </span>
+            )}
           </div>
-
-          <Text size="1" weight="medium">
+          <Text size="1" weight="medium" className="shrink-0">
             {exam.number_of_students}
           </Text>
         </Flex>

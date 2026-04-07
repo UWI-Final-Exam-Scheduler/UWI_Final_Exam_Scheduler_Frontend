@@ -23,6 +23,37 @@ export function useCalendarExamFetch(date: Date | undefined) {
   const [haveExamsDay, setHaveExamsDay] = useState<Date[]>([]);
   const selectedDateRef = useRef<Date | undefined>(undefined);
 
+  // prevent a failed fetch of one day from causing the entire schedule to fail loading
+  const fetchScheduledExamsSafely = async (days: string[]) => {
+    const settled = await Promise.allSettled(
+      days.map((day) => examFetchbyDate(day)),
+    );
+    const allScheduled: Exam[] = [];
+
+    settled.forEach((result, index) => {
+      if (result.status === "fulfilled") {
+        allScheduled.push(
+          ...result.value.map((exam: Exam) => ({
+            ...exam,
+            timeColumnId: String(exam.time),
+          })),
+        );
+      } else {
+        console.warn(
+          `Skipping day ${days[index]} during schedule refresh:`,
+          result.reason,
+        );
+      }
+    });
+
+    return allScheduled;
+  };
+
+  const refreshAllScheduledExams = async (days: string[]) => {
+    const allScheduled = await fetchScheduledExamsSafely(days);
+    setAllScheduledExams(allScheduled);
+  };
+
   useEffect(() => {
     venueFetch()
       .then((data: Venue[]) => setVenues(data))
@@ -36,10 +67,7 @@ export function useCalendarExamFetch(date: Date | undefined) {
         const days: string[] = await get_days_with_exams();
         setHaveExamsDay(days.map((d) => new Date(d + "T12:00:00")));
 
-        const [rescheduleData, ...scheduledResults] = await Promise.all([
-          fetchExamstobeRescheduled(),
-          ...days.map((day) => examFetchbyDate(day)),
-        ]);
+        const rescheduleData = await fetchExamstobeRescheduled();
 
         console.log(
           "reschedule from DB:",
@@ -50,15 +78,7 @@ export function useCalendarExamFetch(date: Date | undefined) {
         );
         setRescheduleExams(rescheduleData);
 
-        const allScheduled: Exam[] = [];
-        scheduledResults.forEach((dayExams) => {
-          allScheduled.push(
-            ...dayExams.map((exam: Exam) => ({
-              ...exam,
-              timeColumnId: String(exam.time),
-            })),
-          );
-        });
+        const allScheduled = await fetchScheduledExamsSafely(days);
         setAllScheduledExams(allScheduled);
       } catch (err) {
         console.error("Failed to fetch initial exams:", err);
@@ -114,6 +134,7 @@ export function useCalendarExamFetch(date: Date | undefined) {
       try {
         const days: string[] = await get_days_with_exams();
         setHaveExamsDay(days.map((d) => new Date(d + "T12:00:00")));
+        await refreshAllScheduledExams(days);
       } catch (error) {
         console.error("Error fetching days with exams:", error);
       }

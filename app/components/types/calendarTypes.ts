@@ -57,11 +57,7 @@ export type PendingMove = {
 
 export type CalendarMoveActions = {
   handleMoveToReschedule: (move: PendingMove) => Promise<void>;
-  handleMoveFromReschedule: (
-    move: PendingMove,
-    date: Date,
-    rescheduleExamsList: Exam[],
-  ) => Promise<void>;
+  handleMoveFromReschedule: (move: PendingMove, date: Date) => Promise<void>;
   handleSameDayTimeChange: (move: PendingMove) => Promise<void>;
 };
 

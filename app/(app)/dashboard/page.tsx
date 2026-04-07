@@ -12,10 +12,7 @@ export default function Dashboard() {
   return (
     <div>
       <h1>Dashboard Page</h1>
-      <CalendarDayPicker
-        startMonth={new Date(2026, 11)}
-        endMonth={new Date(2026, 11)}
-      />
+      <CalendarDayPicker />
     </div>
   );
 }

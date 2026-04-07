@@ -10,8 +10,10 @@ export function useRefineCalendar(date: Date | undefined) {
 
   const moveActions = useCalendarMove(
     fetchState.exams,
+    fetchState.rescheduleExams,
     fetchState.setExams,
     fetchState.setRescheduleExams,
+    fetchState.venues,
   );
 
   const { occupancyMap, wouldExceedCapacity } = useCapacityFlag(
@@ -22,14 +24,13 @@ export function useRefineCalendar(date: Date | undefined) {
   const dragState = useCalendarExamDrag(
     fetchState.exams,
     fetchState.rescheduleExams,
+    fetchState.allScheduledExams,
     fetchState.selectedDateRef,
     fetchState.fetchDaysWithExams,
     moveActions,
     fetchState.venues,
     wouldExceedCapacity,
     occupancyMap,
-    fetchState.fetchRescheduleExams,
-    fetchState.fetchDaysWithExams,
   );
 
   const splitMerge = useExamSplitMerge(
