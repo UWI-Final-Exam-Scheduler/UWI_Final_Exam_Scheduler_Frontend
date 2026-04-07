@@ -1,38 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UWI Final Exam Scheduler — Frontend
 
-## Getting Started
+## Overview
+This is the frontend for the UWI Final Exam Scheduler system. It is built using **Next.js with TypeScript** and provides the user interface for interacting with exam scheduling, data management, and administrative features.
 
-First, run the development server:
+---
+
+## Tech Stack
+
+- **Framework:** Next.js (React + TypeScript)
+- **State Management:** Zustand
+- **Data Fetching:** React Query
+- **UI Components:** Radix UI, Tailwind CSS
+- **Drag & Drop:** dnd-kit
+- **File Uploads:** UploadThing
+- **Notifications:** react-hot-toast
+
+---
+
+## Running the Frontend Locally
+
+### Install Dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+If you don’t have pnpm installed:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install -g pnpm
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+### Start Development Server
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+App will be available at:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+[http://localhost:3000](http://localhost:3000)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
 
-![test](./Images/login.png)
+## Environment Variables
+
+Environment variables required for API connections and configuration will be provided separately during handover.
+
+---
+
+
+## Workflow
+
+The general workflow for using the frontend is as follows:
+
+---
+
+### 1. Login
+
+When accessing the application, users are first greeted with the login page.
+
+![Login Page](./Images/login.png)
+
+After entering valid credentials, the user is authenticated and redirected into the system.
+
+---
+
+### 2. Dashboard
+
+Upon successful login, the user is taken to the dashboard.
+
+![Dashboard](./Images/dashboard.png)
+
+The dashboard serves as the central hub of the application and provides:
+- An overview of the current scheduling state
+- Access to scheduling tools
+- Navigation to other system features
+
+---
+
+### 3. Scheduling Exams (If Data Already Exists)
+
+If the database has already been populated and processed, users can immediately begin scheduling exams by clicking a day hilighted blue as seen here on the dashboard.
+
+![Calendar Scheduling](./Images/hilighted_dashboard.png)
+
+From the dashboard:
+- The calendar interface is used to assign exams to timeslots and venues
+- Users can interact with the scheduling view to manage allocations
+- Changes are reflected dynamically in the timetable
+
+---
+
+### 4. Uploading Data (Initial Setup)
+
+If the database has not yet been populated, users can upload the required data.
+
+![Upload Feature](./Images/upload.png)
+
+The system provides an upload feature that:
+- Accepts a PDF document containing exam information
+- Parses the document automatically
+- Extracts relevant data and inserts it into the database (e.g., Exams table)
+
+This step is typically performed once per dataset before scheduling begins.
+
+---
+
+### 5. Managing the Scheduling Process
+
+Once data is available, users can:
+- Adjust exam placements via the calendar
+- Resolve scheduling conflicts
+- Refine the timetable as needed
+
+![Scheduling Interaction](./Images/scheduling.png)
+
+---
+
+### 6. End-to-End Flow Summary
+
+1. User logs in  
+2. User is directed to the dashboard  
+3. If data exists → proceed to scheduling via calendar  
+4. If no data exists → upload PDF to populate database  
+5. Use scheduling tools to organise exams  
+
+--- 
+
