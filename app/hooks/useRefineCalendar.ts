@@ -14,6 +14,8 @@ export function useRefineCalendar(date: Date | undefined) {
     fetchState.setExams,
     fetchState.setRescheduleExams,
     fetchState.venues,
+    fetchState.fetchRescheduleExams,
+    fetchState.fetchDaysWithExams,
   );
 
   const { occupancyMap, wouldExceedCapacity } = useCapacityFlag(

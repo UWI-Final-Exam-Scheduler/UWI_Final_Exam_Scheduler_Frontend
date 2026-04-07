@@ -11,6 +11,8 @@ export function useCalendarMove(
   setExams: Dispatch<SetStateAction<Exam[]>>,
   setRescheduleExams: Dispatch<SetStateAction<Exam[]>>,
   venues: Venue[],
+  fetchRescheduleExams: () => Promise<void>,
+  fetchDaysWithExams: () => Promise<void>,
 ) {
   void venues; // Marking venues as intentionally unused
 
@@ -52,6 +54,9 @@ export function useCalendarMove(
     });
 
     toast.success("Exam moved to reschedule 📝");
+    // Refresh from backend to avoid stale IDs
+    await fetchRescheduleExams();
+    await fetchDaysWithExams();
   }
 
   async function handleMoveFromReschedule(
@@ -70,24 +75,26 @@ export function useCalendarMove(
       false,
     );
 
-    // Check if other splits already exist in this slot
-
-    // No merge — just move to calendar
+    // Always keep splits as separate objects, never merge automatically
     setRescheduleExams((prev: Exam[]) =>
       prev.filter((e: Exam) => e.id !== moveExamId),
     );
 
-    setExams((prev: Exam[]) => [
-      ...prev,
-      {
-        ...move.exam,
-        date: newDateStr,
-        exam_date: newDateStr,
-        time: Number(move.toColumnId),
-        timeColumnId: move.toColumnId,
-        venue_id: move.toVenueId!,
-      },
-    ]);
+    setExams((prev: Exam[]) => {
+      // Remove only the moved split, keep all others (even if same course/venue/time)
+      const filtered = prev.filter((e) => e.id !== moveExamId);
+      return [
+        ...filtered,
+        {
+          ...move.exam,
+          date: newDateStr,
+          exam_date: newDateStr,
+          time: Number(move.toColumnId),
+          timeColumnId: move.toColumnId,
+          venue_id: move.toVenueId!,
+        },
+      ];
+    });
 
     addLog({
       action: "Move Exam from Reschedule",
@@ -97,6 +104,9 @@ export function useCalendarMove(
     });
 
     toast.success("Exam moved to calendar");
+    // Refresh from backend to avoid stale IDs
+    await fetchRescheduleExams();
+    await fetchDaysWithExams();
   }
 
   async function handleSameDayTimeChange(move: PendingMove) {
@@ -109,18 +119,20 @@ export function useCalendarMove(
       false,
     );
 
-    // check if there are OTHER splits of the same course in the SAME slot
-    const updatedExams = exams.map((exam) =>
-      exam.id === moveExamId
-        ? {
-            ...exam,
-            time: Number(move.toColumnId),
-            timeColumnId: move.toColumnId,
-            venue_id: move.toVenueId ?? exam.venue_id,
-          }
-        : exam,
-    );
-    setExams(updatedExams);
+    // Always keep splits as separate objects, never merge automatically
+    setExams((prev: Exam[]) => {
+      // Remove only the moved split, keep all others (even if same course/venue/time)
+      const filtered = prev.filter((e) => e.id !== moveExamId);
+      return [
+        ...filtered,
+        {
+          ...move.exam,
+          time: Number(move.toColumnId),
+          timeColumnId: move.toColumnId,
+          venue_id: move.toVenueId ?? move.exam.venue_id,
+        },
+      ];
+    });
 
     addLog({
       action: "Move Exam Same Day",
@@ -130,6 +142,9 @@ export function useCalendarMove(
     });
 
     toast.success("Exam moved successfully");
+    // Refresh from backend to avoid stale IDs
+    await fetchRescheduleExams();
+    await fetchDaysWithExams();
   }
 
   return {
