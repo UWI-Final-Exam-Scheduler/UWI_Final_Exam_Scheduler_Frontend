@@ -35,7 +35,13 @@ export default function ExamCardDnD({
     allExams.filter((e) => e.courseCode === exam.courseCode).length > 1;
 
   const card = (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={style}
+      className="cursor-pointer"
+    >
       <Card
         variant="surface"
         className="h-7"

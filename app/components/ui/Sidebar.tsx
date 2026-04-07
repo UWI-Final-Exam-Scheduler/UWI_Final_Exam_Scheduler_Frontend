@@ -25,12 +25,18 @@ export default function Sidebar() {
             color="gray"
             size="2"
             onClick={() => setIsOpen((prev) => !prev)}
-            style={{ width: "100%", justifyContent: "center" }}
+            className="cursor-pointer"
+            style={{
+              width: "100%",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
           >
             <Icon
               icon={isOpen ? "mdi:menu-open" : "mdi:menu"}
               width={20}
               height={20}
+              style={{ cursor: "pointer" }}
             />
           </Button>
           {isOpen &&
