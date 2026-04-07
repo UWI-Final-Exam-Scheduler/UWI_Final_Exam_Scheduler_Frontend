@@ -1,61 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import { useDropzone } from "react-dropzone";
-import type { FileRejection } from "react-dropzone";
-import toast from "react-hot-toast";
-import { addLog } from "@/app/lib/activityLog"
 
-export default function DragAndDropUploader() {
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
+type DragAndDropUploaderProps = {
+  uploading: boolean;
+  message: string;
+  onFileSelect: (file: File) => void;
+};
 
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    setMessage("");
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL}/api/upload`,
-        {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        },
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Upload Failed");
-      }
-
-      addLog({
-        action: "File Upload",
-        entityId: file.name,
-      });
-
-      toast.success(`${file.name} uploaded successfully 📁`)
-
-      setMessage(`${data.message}`);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setMessage(`${err.message}`);
-      } else {
-        setMessage("An unexpected error occured");
-      }
-    } finally {
-      setUploading(false);
-    }
-  };
-
+export default function DragAndDropUploader({
+  uploading,
+  message,
+  onFileSelect,
+}: DragAndDropUploaderProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    onDrop: (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
-        handleUpload(acceptedFiles[0]);
+        onFileSelect(acceptedFiles[0]);
       }
     },
     accept: {
