@@ -326,6 +326,7 @@ export default function CalendarDayPicker({
           open={rescheduleMergeDialogOpen}
           onConfirm={onRescheduleExamMergeConfirm}
           onCancel={onCloseRescheduleMerge}
+          venues={venues}
         />
       </div>
       <DragOverlay zIndex={9999}>

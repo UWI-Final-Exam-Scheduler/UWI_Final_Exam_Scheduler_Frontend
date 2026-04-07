@@ -101,7 +101,18 @@ export function useExamSplitMerge(
         } else {
           setExams((prev) => [
             ...prev.filter((e) => !examIds.includes(e.id)),
-            ...merged.map((m: Exam) => ({ ...m, timeColumnId: "0" })),
+            ...merged.map((m: Exam) => ({
+              ...m,
+              // Keep merged exams in the active calendar slot for immediate UI update.
+              timeColumnId:
+                m.time != null
+                  ? String(m.time)
+                  : (activeExam?.timeColumnId ?? "0"),
+              time: m.time ?? activeExam?.time,
+              date: m.date ?? activeExam?.date,
+              exam_date: m.exam_date ?? activeExam?.exam_date,
+              venue_id: m.venue_id ?? activeExam?.venue_id,
+            })),
           ]);
         }
         toast.success("Exams merged successfully");

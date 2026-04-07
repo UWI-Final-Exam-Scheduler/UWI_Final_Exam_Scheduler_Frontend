@@ -45,7 +45,7 @@ export default function ExamDisplayer({
             pendingMove.toColumnId === "0" &&
             exams.filter((e) => e.courseCode === pendingMove.exam.courseCode)
               .length > 1
-              ? `Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}? This exam has multiple splits — all splits will be collapsed into one.`
+              ? `Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}? This exam has multiple splits — only this split will be moved.`
               : `Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}?`
           }
           onConfirm={handleConfirmMove}
@@ -74,6 +74,7 @@ export default function ExamDisplayer({
         open={mergeDialogOpen}
         onConfirm={onMergeConfirm}
         onCancel={onCloseMerge}
+        venues={venues}
       />
       <div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 p-4">

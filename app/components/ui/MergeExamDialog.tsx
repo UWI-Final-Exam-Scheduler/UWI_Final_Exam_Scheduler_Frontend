@@ -32,6 +32,8 @@ export default function MergeExamDialog({
   const mergeTimeColumnId = firstSplit?.timeColumnId;
 
   const venue = venues?.find((v) => v.id === mergeVenueId);
+  const getVenueLabel = (venueId: number) =>
+    venues.find((v) => v.id === venueId)?.name ?? `Venue ID ${venueId}`;
   const currentOccupancy =
     occupancyMap?.[mergeVenueId]?.[mergeTimeColumnId] ?? 0;
   const currentSplitTotal = selectedSplits.reduce(
@@ -80,7 +82,7 @@ export default function MergeExamDialog({
                   className="h-4 w-4 accent-blue-500"
                 />
                 <span className="text-sm text-gray-700">
-                  Venue ID {split.venue_id} — {split.number_of_students}{" "}
+                  {getVenueLabel(split.venue_id)} — {split.number_of_students}{" "}
                   students
                 </span>
               </label>
