@@ -51,7 +51,7 @@ export default function ExamCardDnD({
       {...listeners}
       {...attributes}
       style={style}
-      className={`cursor-pointer ${isDragging ? "opacity-0" : "opacity-100"}`}
+      className="cursor-pointer"
     >
       <Card
         variant="surface"
