@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import ExamActionDialog from "./ExamActionDialog";
-import { Exam } from "../types/calendarTypes";
+import { Exam, Venue } from "../types/calendarTypes";
 import { useMergeSelection } from "@/app/hooks/useMergeSelection";
 
 type MergeDialogProps = {
   exam: Exam | null;
   splits: Exam[];
   open: boolean;
-  onConfirm: (examIds: number[]) => Promise<void>;
+  onConfirm: (examIds: number[], moveToReschedule?: boolean) => Promise<void>;
   onCancel: () => void;
+  venues?: Venue[];
+  occupancyMap?: Record<number, Record<string, number>>;
 };
 
 export default function MergeExamDialog({
@@ -19,8 +21,26 @@ export default function MergeExamDialog({
   open,
   onConfirm,
   onCancel,
+  venues = [],
+  occupancyMap = {},
 }: MergeDialogProps) {
   const { selected, totalStudents, toggleSplit } = useMergeSelection(splits);
+
+  const selectedSplits = splits.filter((s) => selected.has(s.id));
+  const firstSplit = selectedSplits[0];
+  const mergeVenueId = firstSplit?.venue_id;
+  const mergeTimeColumnId = firstSplit?.timeColumnId;
+
+  const venue = venues?.find((v) => v.id === mergeVenueId);
+  const currentOccupancy =
+    occupancyMap?.[mergeVenueId]?.[mergeTimeColumnId] ?? 0;
+  const currentSplitTotal = selectedSplits.reduce(
+    (sum, s) => sum + s.number_of_students,
+    0,
+  );
+  const wouldExceed =
+    currentOccupancy - currentSplitTotal + totalStudents >
+    (venue?.capacity ?? 0);
 
   if (!exam) return null;
   const isSimple = splits.length === 2;
@@ -29,10 +49,12 @@ export default function MergeExamDialog({
     <ExamActionDialog
       open={open}
       title={`Merge ${exam.courseCode} Splits`}
-      confirmLabel="Confirm Merge"
+      confirmLabel={
+        wouldExceed ? "Merge & Move to Reschedule" : "Confirm Merge"
+      }
       confirmDisabled={selected.size < 2}
       confirmColor="blue"
-      onConfirm={() => onConfirm([...selected])}
+      onConfirm={() => onConfirm([...selected], wouldExceed)}
       onCancel={onCancel}
     >
       {isSimple ? (
@@ -67,6 +89,19 @@ export default function MergeExamDialog({
           <p className="text-sm text-gray-500">
             Combined total: <strong>{totalStudents}</strong> students
           </p>
+
+          {wouldExceed && selectedSplits.length > 0 && (
+            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded text-sm text-orange-700">
+              <p className="font-semibold mb-1">Capacity Overflow</p>
+              <p>
+                Merging creates <strong>{totalStudents}</strong> students, but
+                {venue?.name} capacity is <strong>{venue?.capacity}</strong>.
+              </p>
+              <p className="text-xs mt-2">
+                Exam will move to `To Be Rescheduled`
+              </p>
+            </div>
+          )}
         </>
       )}
     </ExamActionDialog>

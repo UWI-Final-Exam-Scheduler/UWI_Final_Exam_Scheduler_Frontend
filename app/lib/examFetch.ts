@@ -1,31 +1,47 @@
 import { apiFetch } from "./apiFetch";
 import { Exam } from "../components/types/calendarTypes";
 
+type ExamApiResponse = Exam & {
+  exam_id?: number;
+};
+
+function normalizeExam(exam: ExamApiResponse): Exam {
+  return {
+    ...exam,
+    id: exam.id ?? exam.exam_id ?? 0,
+    timeColumnId: String(exam.time),
+  };
+}
+
 export async function examFetchbyDate(date: string) {
   const response = await apiFetch(`/api/exams/${date}`);
   if (!response.ok) {
     const body = await response.text();
+    // Backend returns 400 for dates outside the exam period. Treat as empty day.
+    if (
+      response.status === 400 &&
+      body.toLowerCase().includes("outside of the exam period")
+    ) {
+      return [];
+    }
     console.error("Days with exams failed:", response.status, body);
     throw new Error("Failed to fetch exam dates");
   }
   const data = await response.json();
-  return (data ?? []).map((exam: Exam) => ({
-    ...exam,
-    timeColumnId: String(exam.time),
-  }));
+  return (data ?? []).map(normalizeExam);
 }
 
 export async function fetchExamstobeRescheduled() {
   const response = await apiFetch(`/api/exams/need_rescheduling`);
   if (!response.ok) throw new Error("Failed to fetch reschedule exams");
   const data = await response.json();
-  return (data ?? []).map((exam: Exam) => ({
-    ...exam,
+  return (data ?? []).map((exam: ExamApiResponse) => ({
+    ...normalizeExam(exam),
     timeColumnId: "0",
   }));
 }
 
-export async function rescheduleExam( //have to add venue
+export async function rescheduleExam(
   examId: number,
   time: number,
   date?: string | null,
@@ -41,6 +57,9 @@ export async function rescheduleExam( //have to add venue
     console.error("Reschedule failed:", response.status, body);
     throw new Error("Failed to reschedule exam");
   }
+
+  const data = await response.json();
+  return normalizeExam(data);
 }
 
 export async function get_days_with_exams() {
@@ -81,10 +100,7 @@ export async function splitExam(
     throw new Error("Failed to split exam");
   }
   const data = await response.json();
-  return (data ?? []).map((exam: Exam) => ({
-    ...exam,
-    timeColumnId: String(exam.time),
-  }));
+  return (data ?? []).map(normalizeExam);
 }
 
 export async function mergeExam(examIds: number[]) {
@@ -92,10 +108,11 @@ export async function mergeExam(examIds: number[]) {
     method: "POST",
     body: JSON.stringify({ examIds }),
   });
-  if (!response.ok) throw new Error("Failed to merge exams");
+  if (!response.ok) {
+    const body = await response.text();
+    console.error("Merge exam failed:", response.status, body);
+    throw new Error("Failed to merge exams");
+  }
   const data = await response.json();
-  return (data ?? []).map((exam: Exam) => ({
-    ...exam,
-    timeColumnId: String(exam.time),
-  }));
+  return (data ?? []).map(normalizeExam);
 }

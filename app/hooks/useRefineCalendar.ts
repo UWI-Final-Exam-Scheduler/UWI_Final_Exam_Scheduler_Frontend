@@ -10,8 +10,10 @@ export function useRefineCalendar(date: Date | undefined) {
 
   const moveActions = useCalendarMove(
     fetchState.exams,
+    fetchState.rescheduleExams,
     fetchState.setExams,
     fetchState.setRescheduleExams,
+    fetchState.venues,
   );
 
   const { occupancyMap, wouldExceedCapacity } = useCapacityFlag(
@@ -22,6 +24,7 @@ export function useRefineCalendar(date: Date | undefined) {
   const dragState = useCalendarExamDrag(
     fetchState.exams,
     fetchState.rescheduleExams,
+    fetchState.allScheduledExams,
     fetchState.selectedDateRef,
     fetchState.fetchDaysWithExams,
     moveActions,
@@ -30,10 +33,19 @@ export function useRefineCalendar(date: Date | undefined) {
     occupancyMap,
   );
 
-  const splitMerge = useExamSplitMerge(fetchState.exams, fetchState.setExams);
+  const splitMerge = useExamSplitMerge(
+    fetchState.exams,
+    fetchState.setExams,
+    fetchState.rescheduleExams,
+    fetchState.setRescheduleExams,
+    fetchState.fetchRescheduleExams,
+  );
   const rescheduleSplitMerge = useExamSplitMerge(
     fetchState.rescheduleExams,
     fetchState.setRescheduleExams,
+    fetchState.rescheduleExams,
+    fetchState.setRescheduleExams,
+    fetchState.fetchRescheduleExams,
   );
 
   return {
@@ -50,6 +62,9 @@ export function useRefineCalendar(date: Date | undefined) {
     onRescheduleExamMergeConfirm: rescheduleSplitMerge.onMergeConfirm,
     onCloseRescheduleSplit: rescheduleSplitMerge.onCloseSplit,
     onCloseRescheduleMerge: rescheduleSplitMerge.onCloseMerge,
+    splitConflictOpen: dragState.splitConflictOpen,
+    splitConflictInfo: dragState.splitConflictInfo,
+    handleDismissSplitConflict: dragState.handleDismissSplitConflict,
     columns: ALL_COLUMNS,
   };
 }

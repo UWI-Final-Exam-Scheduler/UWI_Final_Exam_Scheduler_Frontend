@@ -1,36 +1,93 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import DragAndDropUploader from "@/app/components/ui/DragAndDropUploader";
 import { addLog } from "@/app/lib/activityLog";
-import { apiFetch } from "@/app/lib/apiFetch";
+
+type UploadResponse = {
+  message?: string;
+  error?: string;
+};
 
 export default function UploadPage() {
+  const uploadRequestRef = useRef<XMLHttpRequest | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState("");
+  const [progress, setProgress] = useState(0);
+
+  const uploadWithProgress = (formData: FormData) =>
+    new Promise<{ status: number; data: UploadResponse }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      uploadRequestRef.current = xhr;
+
+      xhr.open("POST", "/api/upload");
+      xhr.withCredentials = true;
+
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) {
+          return;
+        }
+
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setProgress(Math.min(Math.max(percent, 0), 100));
+
+        if (percent >= 100) {
+          setProcessing(true);
+        }
+      };
+
+      xhr.onload = () => {
+        uploadRequestRef.current = null;
+        const contentType = xhr.getResponseHeader("content-type") || "";
+        const responseText = xhr.responseText || "";
+
+        let data: UploadResponse = {};
+        if (contentType.includes("application/json")) {
+          try {
+            data = JSON.parse(responseText) as UploadResponse;
+          } catch {
+            data = { error: "Invalid JSON response from server." };
+          }
+        } else if (responseText) {
+          data = { error: responseText };
+        }
+
+        resolve({ status: xhr.status, data });
+      };
+
+      xhr.onerror = () => {
+        uploadRequestRef.current = null;
+        reject(new Error("Network error while uploading file."));
+      };
+
+      xhr.onabort = () => {
+        uploadRequestRef.current = null;
+        reject(new Error("Upload was canceled."));
+      };
+
+      xhr.send(formData);
+    });
 
   const handleUpload = async (file: File) => {
     setUploading(true);
+    setProcessing(false);
     setMessage("");
+    setProgress(0);
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await apiFetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const { status, data } = await uploadWithProgress(formData);
 
-      const contentType = res.headers.get("content-type") || "";
-      const data = contentType.includes("application/json")
-        ? await res.json()
-        : { error: await res.text() };
-
-      if (!res.ok) {
+      if (status < 200 || status >= 300) {
         throw new Error(data.error || "Upload Failed");
       }
+
+      setProgress(100);
+      setProcessing(false);
 
       addLog({
         action: "File Upload",
@@ -45,14 +102,29 @@ export default function UploadPage() {
           : "Upload completed successfully.",
       );
     } catch (err: unknown) {
+      setProcessing(false);
       if (err instanceof Error) {
         setMessage(`${err.message}`);
       } else {
         setMessage("An unexpected error occurred");
       }
     } finally {
+      uploadRequestRef.current = null;
       setUploading(false);
     }
+  };
+
+  const cancelUpload = () => {
+    if (!uploading) {
+      return;
+    }
+
+    uploadRequestRef.current?.abort();
+    setProcessing(false);
+    setUploading(false);
+    setProgress(0);
+    setMessage("Upload canceled.");
+    toast("Upload canceled.");
   };
 
   return (
@@ -60,8 +132,11 @@ export default function UploadPage() {
       <h1 className="text-2xl font-semibold mb-6">Upload Dataset</h1>
       <DragAndDropUploader
         uploading={uploading}
+        processing={processing}
+        progress={progress}
         message={message}
         onFileSelect={handleUpload}
+        onCancelUpload={cancelUpload}
       />
     </div>
   );

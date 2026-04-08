@@ -12,6 +12,7 @@ type SplitEntryProps = {
   open: boolean;
   onConfirm: (splits: SplitEntry[]) => Promise<void>;
   onCancel: () => void;
+  existingSplitCount?: number;
 };
 
 export default function SplitExamDialog({
@@ -19,6 +20,7 @@ export default function SplitExamDialog({
   open,
   onConfirm,
   onCancel,
+  existingSplitCount = 0, // ← This comes from parent
 }: SplitEntryProps) {
   const [splits, setSplits] = useState<SplitEntry[]>([
     { number_of_students: 0 },
@@ -29,6 +31,9 @@ export default function SplitExamDialog({
   const { allocated, remaining, isValid } = useSplitAllocation(splits, total);
 
   if (!exam) return null;
+
+  // ← NEW: Calculate total splits AFTER this split
+  const totalSplitsAfter = existingSplitCount + splits.length;
 
   function updateSplit(i: number, value: number) {
     setSplits((prev) =>
@@ -41,7 +46,7 @@ export default function SplitExamDialog({
       open={open}
       title={`Split ${exam.courseCode}`}
       confirmLabel="Confirm Split"
-      confirmDisabled={!isValid}
+      confirmDisabled={!isValid || totalSplitsAfter > 4}
       onConfirm={() => onConfirm(splits)}
       onCancel={onCancel}
     >
@@ -82,7 +87,13 @@ export default function SplitExamDialog({
         ))}
       </div>
 
-      {splits.length < 4 && (
+      {totalSplitsAfter >= 4 && ( // ← CHANGE THIS (show warning at 4, not before)
+        <p className="text-xs text-orange-500 mb-2">
+          Maximum 4 splits reached. Cannot add more.
+        </p>
+      )}
+
+      {totalSplitsAfter < 4 && ( // ← CHANGE THIS (allow adding until we reach 4)
         <button
           type="button"
           onClick={() =>
