@@ -74,8 +74,9 @@ export function useExamSplitMerge(
   async function onMergeConfirm(examIds: number[], moveToReschedule = false) {
     try {
       const merged = await mergeExam(examIds);
+      const shouldMoveToReschedule = Boolean(moveToReschedule && !isReschedule);
 
-      if (moveToReschedule) {
+      if (shouldMoveToReschedule) {
         // if there is overflow, move merged exam to reschedule
         if (isReschedule) {
           setRescheduleExams((prev) => [

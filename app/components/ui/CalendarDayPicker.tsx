@@ -75,7 +75,8 @@ export default function CalendarDayPicker({
     splitConflictOpen,
     splitConflictInfo,
     handleDismissSplitConflict,
-    allScheduledExams, // ← ADD THIS LINE
+    allScheduledExams,
+    movingZoneIds,
   } = useRefineCalendar(selected);
 
   // Fetch exams on day before and day after selected date
@@ -257,6 +258,7 @@ export default function CalendarDayPicker({
                 clashColorMap={colorMap} //
                 clashExamsMap={clashExamsMap}
                 rescheduleExams={rescheduleExams ?? []}
+                movingZoneIds={movingZoneIds}
               />
             </div>
           )}

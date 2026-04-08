@@ -25,24 +25,14 @@ export default function MergeExamDialog({
   occupancyMap = {},
 }: MergeDialogProps) {
   const { selected, totalStudents, toggleSplit } = useMergeSelection(splits);
-
   const selectedSplits = splits.filter((s) => selected.has(s.id));
-  const firstSplit = selectedSplits[0];
-  const mergeVenueId = firstSplit?.venue_id;
-  const mergeTimeColumnId = firstSplit?.timeColumnId;
-
-  const venue = venues?.find((v) => v.id === mergeVenueId);
+  const activeVenue = venues.find((v) => v.id === exam?.venue_id);
+  const isScheduled = exam?.timeColumnId !== "0";
   const getVenueLabel = (venueId: number) =>
     venues.find((v) => v.id === venueId)?.name ?? `Venue ID ${venueId}`;
-  const currentOccupancy =
-    occupancyMap?.[mergeVenueId]?.[mergeTimeColumnId] ?? 0;
-  const currentSplitTotal = selectedSplits.reduce(
-    (sum, s) => sum + s.number_of_students,
-    0,
+  const wouldExceed = Boolean(
+    isScheduled && activeVenue && totalStudents > activeVenue.capacity,
   );
-  const wouldExceed =
-    currentOccupancy - currentSplitTotal + totalStudents >
-    (venue?.capacity ?? 0);
 
   if (!exam) return null;
   const isSimple = splits.length === 2;
@@ -97,7 +87,8 @@ export default function MergeExamDialog({
               <p className="font-semibold mb-1">Capacity Overflow</p>
               <p>
                 Merging creates <strong>{totalStudents}</strong> students, but
-                {venue?.name} capacity is <strong>{venue?.capacity}</strong>.
+                {activeVenue?.name} capacity is{" "}
+                <strong>{activeVenue?.capacity}</strong>.
               </p>
               <p className="text-xs mt-2">
                 Exam will move to `To Be Rescheduled`

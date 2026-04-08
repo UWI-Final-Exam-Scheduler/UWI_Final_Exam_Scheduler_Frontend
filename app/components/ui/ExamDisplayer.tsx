@@ -29,6 +29,7 @@ export default function ExamDisplayer({
   onCloseMerge,
   clashColorMap,
   clashExamsMap,
+  movingZoneIds,
 }: ExamDisplayerProps) {
   const timeColumns = columns.filter((col) => col.id !== "0");
 
@@ -41,13 +42,7 @@ export default function ExamDisplayer({
         <ScheduleAlert
           open={alertOpen}
           title="Confirm Exam Move"
-          message={
-            pendingMove.toColumnId === "0" &&
-            exams.filter((e) => e.courseCode === pendingMove.exam.courseCode)
-              .length > 1
-              ? `Move ${pendingMove.exam.courseCode} to reschedule? All ${exams.filter((e) => e.courseCode === pendingMove.exam.courseCode).length} splits will be moved together.`
-              : `Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}?`
-          }
+          message={`Move ${pendingMove.exam.courseCode} from ${pendingMove.from} to ${pendingMove.to}?`}
           onConfirm={handleConfirmMove}
           onCancel={handleCancelMove}
         />
@@ -92,6 +87,7 @@ export default function ExamDisplayer({
               )}
               clashColorMap={clashColorMap} //
               clashExamsMap={clashExamsMap} // pass down clash details for hover cards
+              movingZoneIds={movingZoneIds}
             />
           ))}
         </div>

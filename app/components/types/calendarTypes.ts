@@ -38,11 +38,15 @@ export type ExamDisplayerProps = {
   onSplitExam: (exam: Exam) => void;
   onMergeExam: (exam: Exam) => void;
   onSplitConfirm: (splits: { number_of_students: number }[]) => Promise<void>;
-  onMergeConfirm: (examIds: number[]) => Promise<void>;
+  onMergeConfirm: (
+    examIds: number[],
+    moveToReschedule?: boolean,
+  ) => Promise<void>;
   onCloseSplit: () => void;
   onCloseMerge: () => void;
   clashColorMap?: Map<number, "orange" | "hotpink">;
   clashExamsMap?: Map<number, ClashDetail>;
+  movingZoneIds?: string[];
 };
 
 export type PendingMove = {
