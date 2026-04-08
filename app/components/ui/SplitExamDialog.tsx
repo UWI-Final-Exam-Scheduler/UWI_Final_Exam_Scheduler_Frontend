@@ -87,13 +87,13 @@ export default function SplitExamDialog({
         ))}
       </div>
 
-      {totalSplitsAfter >= 4 && ( // ← CHANGE THIS (show warning at 4, not before)
+      {totalSplitsAfter >= 4 && ( // ← CHANGE THIS (show warning at 3, not before)
         <p className="text-xs text-orange-500 mb-2">
-          Maximum 4 splits reached. Cannot add more.
+          Maximum 3 splits reached. Cannot add more.
         </p>
       )}
 
-      {totalSplitsAfter < 4 && ( // ← CHANGE THIS (allow adding until we reach 4)
+      {totalSplitsAfter < 4 && ( // ← CHANGE THIS (allow adding until we reach 3)
         <button
           type="button"
           onClick={() =>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useExamStore } from "../state_management/examStore";
 import { Exam, Venue } from "../components/types/calendarTypes";
 import {
@@ -61,6 +61,26 @@ export function useCalendarExamFetch(date: Date | undefined) {
     setAllScheduledExams(allScheduled);
   };
 
+  const fetchExamsForDate = useCallback(
+    async (targetDate: Date, showLoading = true) => {
+      if (showLoading) setIsLoading(true);
+      try {
+        const data = await examFetchbyDate(formatDatetoString(targetDate));
+        setExams(
+          data.map((exam: Exam) => ({
+            ...exam,
+            timeColumnId: String(exam.time),
+          })),
+        );
+      } catch (err) {
+        console.error("Failed to fetch exams:", err);
+      } finally {
+        if (showLoading) setIsLoading(false);
+      }
+    },
+    [setExams],
+  );
+
   useEffect(() => {
     venueFetch()
       .then((data: Venue[]) => setVenues(data))
@@ -97,7 +117,7 @@ export function useCalendarExamFetch(date: Date | undefined) {
     };
 
     initializeExams();
-  }, []);
+  }, [setAllScheduledExams, setRescheduleExams]);
 
   useEffect(() => {
     selectedDateRef.current = date;
@@ -106,24 +126,8 @@ export function useCalendarExamFetch(date: Date | undefined) {
       setExams([]);
       return;
     }
-    const fetchExams = async () => {
-      setIsLoading(true);
-      try {
-        const data = await examFetchbyDate(formatDatetoString(date));
-        setExams(
-          data.map((exam: Exam) => ({
-            ...exam,
-            timeColumnId: String(exam.time),
-          })),
-        );
-      } catch (err) {
-        console.error("Failed to fetch exams:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchExams();
-  }, [date]);
+    fetchExamsForDate(date);
+  }, [date, fetchExamsForDate, setExams]);
 
   return {
     exams,
@@ -145,6 +149,14 @@ export function useCalendarExamFetch(date: Date | undefined) {
       } catch (error) {
         console.error("Error fetching days with exams:", error);
       }
+    },
+    refreshSelectedDateExams: async () => {
+      const selectedDate = selectedDateRef.current;
+      if (!selectedDate || isWeekend(selectedDate)) {
+        setExams([]);
+        return;
+      }
+      await fetchExamsForDate(selectedDate, false);
     },
     selectedDateRef,
     venues,

@@ -28,8 +28,10 @@ export default function MergeExamDialog({
   const selectedSplits = splits.filter((s) => selected.has(s.id));
   const activeVenue = venues.find((v) => v.id === exam?.venue_id);
   const isScheduled = exam?.timeColumnId !== "0";
-  const getVenueLabel = (venueId: number) =>
-    venues.find((v) => v.id === venueId)?.name ?? `Venue ID ${venueId}`;
+  const getVenueLabel = (venueId?: number | null) => {
+    if (venueId == null) return "Venue: TBD";
+    return venues.find((v) => v.id === venueId)?.name ?? "Venue: TBD";
+  };
   const wouldExceed = Boolean(
     isScheduled && activeVenue && totalStudents > activeVenue.capacity,
   );

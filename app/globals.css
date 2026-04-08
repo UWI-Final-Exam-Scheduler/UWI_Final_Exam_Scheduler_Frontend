@@ -26,3 +26,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"],
+.rt-BaseButton,
+.rt-Button,
+.rt-IconButton {
+  cursor: pointer !important;
+}
+
+button:disabled,
+input:disabled,
+[aria-disabled="true"],
+.rt-BaseButton:disabled,
+.rt-Button:disabled,
+.rt-IconButton:disabled {
+  cursor: not-allowed !important;
+}
