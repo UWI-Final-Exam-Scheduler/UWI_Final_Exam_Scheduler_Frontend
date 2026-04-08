@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useExamStore } from "../state_management/examStore";
 import { Exam, Venue } from "../components/types/calendarTypes";
 import {
   get_days_with_exams,
@@ -14,14 +15,20 @@ function isWeekend(date: Date): boolean {
 }
 
 export function useCalendarExamFetch(date: Date | undefined) {
-  const [exams, setExams] = useState<Exam[]>([]);
-  const [rescheduleExams, setRescheduleExams] = useState<Exam[]>([]);
-  const [allScheduledExams, setAllScheduledExams] = useState<Exam[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [haveExamsDay, setHaveExamsDay] = useState<Date[]>([]);
   const selectedDateRef = useRef<Date | undefined>(undefined);
+
+  const {
+    exams,
+    setExams,
+    rescheduleExams,
+    setRescheduleExams,
+    allScheduledExams,
+    setAllScheduledExams,
+  } = useExamStore();
 
   // prevent a failed fetch of one day from causing the entire schedule to fail loading
   const fetchScheduledExamsSafely = async (days: string[]) => {

@@ -1,20 +1,17 @@
-import { Exam, PendingMove } from "../components/types/calendarTypes";
+// app/hooks/useCalendarMove.ts
+import { PendingMove, Venue, Exam } from "../components/types/calendarTypes";
 import { formatDatetoString, rescheduleExam } from "../lib/examFetch";
-import { Dispatch, SetStateAction } from "react";
 import toast from "react-hot-toast";
 import { addLog } from "@/app/lib/activityLog";
-import { Venue } from "../components/types/calendarTypes";
+import { useExamStore } from "../state_management/examStore";
 
 export function useCalendarMove(
-  exams: Exam[],
-  rescheduleExams: Exam[],
-  setExams: Dispatch<SetStateAction<Exam[]>>,
-  setRescheduleExams: Dispatch<SetStateAction<Exam[]>>,
   venues: Venue[],
   fetchRescheduleExams: () => Promise<void>,
   fetchDaysWithExams: () => Promise<void>,
 ) {
-  void venues; // Marking venues as intentionally unused
+  void venues;
+  const store = useExamStore();
 
   const getMoveExamId = (move: PendingMove): number => {
     const parsed = Number(move.examId ?? move.exam.id);
@@ -25,38 +22,34 @@ export function useCalendarMove(
   };
 
   async function handleMoveToReschedule(move: PendingMove) {
-    const moveExamId = getMoveExamId(move);
     const courseCode = move.exam.courseCode;
+    const { snapshot, movedExams } =
+      store.optimisticMoveToReschedule(courseCode);
 
-    const updatedExam = await rescheduleExam(moveExamId, 0, null, null, true);
+    try {
+      await Promise.all(
+        movedExams.map((e) => rescheduleExam(e.id, 0, null, null, true)),
+      );
 
-    // Move only this split to reschedule; keep sibling splits where they are.
-    setExams((prev) => prev.filter((e) => e.id !== moveExamId));
+      addLog({
+        action: "Move Exam to Reschedule",
+        entityId: courseCode,
+        oldValue: `Time: ${move.exam.timeColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.exam.venue_id}`,
+        newValue: "To Be Rescheduled",
+      });
 
-    setRescheduleExams((prev) => [
-      // Only replace the moved split and preserve local split size.
-      ...prev.filter((e) => e.id !== moveExamId),
-      {
-        ...updatedExam,
-        id: moveExamId,
-        courseCode: move.exam.courseCode,
-        exam_length: move.exam.exam_length,
-        number_of_students: move.exam.number_of_students,
-        timeColumnId: "0",
-      },
-    ]);
-
-    addLog({
-      action: "Move Exam to Reschedule",
-      entityId: courseCode,
-      oldValue: `Time: ${move.exam.timeColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.exam.venue_id}`,
-      newValue: "To Be Rescheduled",
-    });
-
-    toast.success("Exam moved to reschedule 📝");
-    // Refresh from backend to avoid stale IDs
-    await fetchRescheduleExams();
-    await fetchDaysWithExams();
+      toast.success(
+        movedExams.length > 1
+          ? `${courseCode}: all ${movedExams.length} splits moved to reschedule 📝`
+          : "Exam moved to reschedule 📝",
+      );
+      fetchRescheduleExams();
+      fetchDaysWithExams();
+    } catch (err) {
+      store.restoreSnapshot(snapshot);
+      toast.error("Failed to move exam — please try again");
+      console.error("handleMoveToReschedule failed:", err);
+    }
   }
 
   async function handleMoveFromReschedule(
@@ -67,84 +60,114 @@ export function useCalendarMove(
     const newDateStr = formatDatetoString(currentDate);
     const courseCode = move.exam.courseCode;
 
-    await rescheduleExam(
-      moveExamId,
-      Number(move.toColumnId),
-      newDateStr,
-      move.toVenueId,
-      false,
-    );
+    const updatedExam: Exam = {
+      ...move.exam,
+      date: newDateStr,
+      exam_date: newDateStr,
+      time: Number(move.toColumnId),
+      timeColumnId: move.toColumnId,
+      venue_id: move.toVenueId!,
+    };
 
-    // Always keep splits as separate objects, never merge automatically
-    setRescheduleExams((prev: Exam[]) =>
-      prev.filter((e: Exam) => e.id !== moveExamId),
-    );
+    // Optimistic update first
+    store.setRescheduleExams((prev) => prev.filter((e) => e.id !== moveExamId));
+    store.setExams((prev) => [
+      ...prev.filter((e) => e.id !== moveExamId),
+      updatedExam,
+    ]);
+    store.setAllScheduledExams((prev) => [
+      ...prev.filter((e) => e.id !== moveExamId),
+      updatedExam,
+    ]);
 
-    setExams((prev: Exam[]) => {
-      // Remove only the moved split, keep all others (even if same course/venue/time)
-      const filtered = prev.filter((e) => e.id !== moveExamId);
-      return [
-        ...filtered,
-        {
-          ...move.exam,
-          date: newDateStr,
-          exam_date: newDateStr,
-          time: Number(move.toColumnId),
-          timeColumnId: move.toColumnId,
-          venue_id: move.toVenueId!,
-        },
-      ];
-    });
+    try {
+      await rescheduleExam(
+        moveExamId,
+        Number(move.toColumnId),
+        newDateStr,
+        move.toVenueId,
+        false,
+      );
 
-    addLog({
-      action: "Move Exam from Reschedule",
-      entityId: courseCode,
-      oldValue: "To Be Rescheduled",
-      newValue: `Time: ${move.toColumnId}, Date: ${newDateStr}, Venue: ${move.toVenueId}`,
-    });
+      addLog({
+        action: "Move Exam from Reschedule",
+        entityId: courseCode,
+        oldValue: "To Be Rescheduled",
+        newValue: `Time: ${move.toColumnId}, Date: ${newDateStr}, Venue: ${move.toVenueId}`,
+      });
 
-    toast.success("Exam moved to calendar");
-    // Refresh from backend to avoid stale IDs
-    await fetchRescheduleExams();
-    await fetchDaysWithExams();
+      toast.success("Exam moved to calendar");
+
+      fetchRescheduleExams();
+      fetchDaysWithExams();
+    } catch (err) {
+      // Rollback
+      store.setExams((prev) => prev.filter((e) => e.id !== moveExamId));
+      store.setAllScheduledExams((prev) =>
+        prev.filter((e) => e.id !== moveExamId),
+      );
+      store.setRescheduleExams((prev) => [
+        ...prev.filter((e) => e.id !== moveExamId),
+        { ...move.exam, timeColumnId: "0" },
+      ]);
+      toast.error("Failed to move exam — please try again");
+      console.error("handleMoveFromReschedule failed:", err);
+    }
   }
 
   async function handleSameDayTimeChange(move: PendingMove) {
     const moveExamId = getMoveExamId(move);
-    await rescheduleExam(
-      moveExamId,
-      Number(move.toColumnId),
-      undefined,
-      move.toVenueId ?? null,
-      false,
-    );
 
-    // Always keep splits as separate objects, never merge automatically
-    setExams((prev: Exam[]) => {
-      // Remove only the moved split, keep all others (even if same course/venue/time)
-      const filtered = prev.filter((e) => e.id !== moveExamId);
-      return [
-        ...filtered,
-        {
-          ...move.exam,
-          time: Number(move.toColumnId),
-          timeColumnId: move.toColumnId,
-          venue_id: move.toVenueId ?? move.exam.venue_id,
-        },
-      ];
-    });
+    const updatedExam: Exam = {
+      ...move.exam,
+      time: Number(move.toColumnId),
+      timeColumnId: move.toColumnId,
+      venue_id: move.toVenueId ?? move.exam.venue_id,
+    };
 
-    addLog({
-      action: "Move Exam Same Day",
-      entityId: move.exam.courseCode,
-      oldValue: `Time: ${move.fromColumnId ?? move.exam.timeColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.exam.venue_id}`,
-      newValue: `Time: ${move.toColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.toVenueId ?? move.exam.venue_id}`,
-    });
+    // update first
+    store.setExams((prev) => [
+      ...prev.filter((e) => e.id !== moveExamId),
+      updatedExam,
+    ]);
+    store.setAllScheduledExams((prev) => [
+      ...prev.filter((e) => e.id !== moveExamId),
+      updatedExam,
+    ]);
 
-    toast.success("Exam moved successfully");
-    // Refresh from backend to avoid stale IDs
-    await fetchRescheduleExams();
-    await fetchDaysWithExams();
+    try {
+      await rescheduleExam(
+        moveExamId,
+        Number(move.toColumnId),
+        undefined,
+        move.toVenueId ?? null,
+        false,
+      );
+
+      addLog({
+        action: "Move Exam Same Day",
+        entityId: move.exam.courseCode,
+        oldValue: `Time: ${move.fromColumnId ?? move.exam.timeColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.exam.venue_id}`,
+        newValue: `Time: ${move.toColumnId}, Date: ${move.exam.exam_date}, Venue: ${move.toVenueId ?? move.exam.venue_id}`,
+      });
+
+      toast.success("Exam moved successfully");
+
+      fetchRescheduleExams();
+      fetchDaysWithExams();
+    } catch (err) {
+      // Rollback
+      store.setExams((prev) => [
+        ...prev.filter((e) => e.id !== moveExamId),
+        move.exam,
+      ]);
+      store.setAllScheduledExams((prev) => [
+        ...prev.filter((e) => e.id !== moveExamId),
+        move.exam,
+      ]);
+      toast.error("Failed to move exam — please try again");
+      console.error("handleSameDayTimeChange failed:", err);
+    }
   }
 
   return {
