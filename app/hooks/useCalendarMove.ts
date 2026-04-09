@@ -11,7 +11,7 @@ import { useExamStore } from "../state_management/examStore";
 
 export function useCalendarMove(
   venues: Venue[],
-  fetchRescheduleExams: () => Promise<void>,
+  fetchRescheduleExams: (showLoading?: boolean) => Promise<void>,
   fetchDaysWithExams: () => Promise<void>,
 ) {
   const store = useExamStore();
@@ -26,26 +26,24 @@ export function useCalendarMove(
 
   async function handleMoveToReschedule(move: PendingMove) {
     const moveExamId = getMoveExamId(move);
-    // const { snapshot, movedExams } =
-    //   store.optimisticMoveToReschedule(courseCode);
     const snapshot = {
       exams: [...store.exams],
       rescheduleExams: [...store.rescheduleExams],
       allScheduledExams: [...store.allScheduledExams],
     };
 
-    // Move only this one dragged split (not all course splits).
-    store.setExams((prev) => prev.filter((e) => e.id !== moveExamId));
-    store.setAllScheduledExams((prev) =>
-      prev.filter((e) => e.id !== moveExamId),
-    );
-    store.setRescheduleExams((prev) => [
-      ...prev.filter((e) => e.id !== moveExamId),
-      { ...move.exam, timeColumnId: "0" },
-    ]);
-
     try {
       await rescheduleExam(moveExamId, 0, null, null, true, true);
+
+      // Apply once backend confirms to avoid optimistic flicker.
+      store.setExams((prev) => prev.filter((e) => e.id !== moveExamId));
+      store.setAllScheduledExams((prev) =>
+        prev.filter((e) => e.id !== moveExamId),
+      );
+      store.setRescheduleExams((prev) => [
+        ...prev.filter((e) => e.id !== moveExamId),
+        { ...move.exam, timeColumnId: "0" },
+      ]);
 
       addLog({
         action: "Move Exam to Reschedule",
@@ -55,7 +53,7 @@ export function useCalendarMove(
       });
 
       toast.success("Exam moved to reschedule");
-      await fetchRescheduleExams();
+      await fetchRescheduleExams(false);
       await fetchDaysWithExams();
     } catch (err) {
       store.restoreSnapshot(snapshot);
@@ -109,10 +107,6 @@ export function useCalendarMove(
       allScheduledExams: [...store.allScheduledExams],
     };
 
-    // Only optimistic remove from reschedule.
-    // Do NOT optimistic add to scheduled list because backend may auto-merge and change IDs.
-    store.setRescheduleExams((prev) => prev.filter((e) => e.id !== moveExamId));
-
     try {
       await rescheduleExam(
         moveExamId,
@@ -139,7 +133,7 @@ export function useCalendarMove(
       });
 
       toast.success("Exam moved to calendar");
-      await fetchRescheduleExams();
+      await fetchRescheduleExams(false);
       await fetchDaysWithExams();
     } catch (err) {
       store.restoreSnapshot(snapshot);

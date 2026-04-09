@@ -17,6 +17,7 @@ function isWeekend(date: Date): boolean {
 export function useCalendarExamFetch(date: Date | undefined) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRescheduleLoading, setIsRescheduleLoading] = useState(true);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [haveExamsDay, setHaveExamsDay] = useState<Date[]>([]);
   const selectedDateRef = useRef<Date | undefined>(undefined);
@@ -94,6 +95,7 @@ export function useCalendarExamFetch(date: Date | undefined) {
         const days: string[] = await get_days_with_exams();
         setHaveExamsDay(days.map((d) => new Date(d + "T12:00:00")));
 
+        setIsRescheduleLoading(true);
         const rescheduleData = await fetchExamstobeRescheduled();
 
         console.log(
@@ -112,6 +114,7 @@ export function useCalendarExamFetch(date: Date | undefined) {
         setRescheduleExams([]);
         setAllScheduledExams([]);
       } finally {
+        setIsRescheduleLoading(false);
         setIsInitialLoading(false);
       }
     };
@@ -134,12 +137,18 @@ export function useCalendarExamFetch(date: Date | undefined) {
     setExams,
     rescheduleExams,
     setRescheduleExams,
-    fetchRescheduleExams: async () => {
-      const data = await fetchExamstobeRescheduled();
-      setRescheduleExams(data);
+    fetchRescheduleExams: async (showLoading = true) => {
+      if (showLoading) setIsRescheduleLoading(true);
+      try {
+        const data = await fetchExamstobeRescheduled();
+        setRescheduleExams(data);
+      } finally {
+        if (showLoading) setIsRescheduleLoading(false);
+      }
     },
     haveExamsDay,
     isLoading,
+    isRescheduleLoading,
     isInitialLoading,
     fetchDaysWithExams: async () => {
       try {

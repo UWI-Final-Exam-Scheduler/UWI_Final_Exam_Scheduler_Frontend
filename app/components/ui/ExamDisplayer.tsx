@@ -7,7 +7,7 @@ import MergeExamDialog from "./MergeExamDialog";
 import SplitExamDialog from "./SplitExamDialog";
 
 export default function ExamDisplayer({
-  selectedDay: _selectedDay,
+  selectedDay,
   exams,
   rescheduleExams,
   columns,
@@ -35,6 +35,9 @@ export default function ExamDisplayer({
 
   return (
     <div>
+      <h1 className="mb-4 text-center text-2xl font-bold text-gray-800">
+        Exams on {selectedDay.toLocaleDateString()}
+      </h1>
       {pendingMove && (
         <ScheduleAlert
           open={alertOpen}
