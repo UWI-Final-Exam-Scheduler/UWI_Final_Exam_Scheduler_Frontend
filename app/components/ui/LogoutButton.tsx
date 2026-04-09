@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import CustomButton from "./CustomButton";
+import { Button } from "@radix-ui/themes";
 import toast from "react-hot-toast";
 import { addLog } from "@/app/lib/activityLog";
 import { apiFetch } from "@/app/lib/apiFetch";
@@ -42,8 +42,17 @@ export default function LogoutButton() {
   };
 
   return (
-    <div className="ml-auto">
-      <CustomButton buttonname="Logout" color="gray" onclick={handleLogout} />
-    </div>
+    <Button
+      type="button"
+      onClick={handleLogout}
+      variant="solid"
+      color="gray"
+      radius="large"
+      size="2"
+      className="font-bold"
+      style={{ cursor: "pointer" }}
+    >
+      Logout
+    </Button>
   );
 }

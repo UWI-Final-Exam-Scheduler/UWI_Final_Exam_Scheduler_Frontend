@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import VenueSelect from "@/app/components/ui/VenueSelect";
 import CustomCard from "@/app/components/ui/CustomCard";
 import { apiFetch } from "@/app/lib/apiFetch";
+import { Spinner } from "@radix-ui/themes";
 
 type Venue = {
   name: string;
@@ -63,12 +64,17 @@ export default function Venues() {
   };
 
   if (!dataIsLoaded) {
-    return <div>Loading venues...</div>;
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-gray-700">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
     <div>
-      <h1>Venues Page</h1>
+      <h1 className="mb-3 text-2xl font-bold text-gray-800">Venues </h1>
+
       <div className="mb-4">
         <VenueSelect data={venues} onChange={handleVenueChange} />
       </div>

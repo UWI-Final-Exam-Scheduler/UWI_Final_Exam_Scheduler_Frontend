@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@radix-ui/themes";
 import { exportExamsToPDF } from "@/app/lib/exportExamsToPDF";
-import {
-  get_days_with_exams,
-  examFetchbyDate,
-} from "@/app/lib/examFetch";
+import { get_days_with_exams, examFetchbyDate } from "@/app/lib/examFetch";
 import { venueFetch } from "@/app/lib/venueFetch";
-import { Exam, Venue } from "@/app/components/types/calendarTypes";
+import { Exam } from "@/app/components/types/calendarTypes";
 
 export default function ExportPDFButton() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +14,7 @@ export default function ExportPDFButton() {
     const days: string[] = await get_days_with_exams();
 
     const results = await Promise.allSettled(
-      days.map((day) => examFetchbyDate(day))
+      days.map((day) => examFetchbyDate(day)),
     );
 
     const all: Exam[] = [];
@@ -27,7 +25,7 @@ export default function ExportPDFButton() {
           ...res.value.map((exam: Exam) => ({
             ...exam,
             timeColumnId: String(exam.time),
-          }))
+          })),
         );
       }
     });
@@ -53,12 +51,17 @@ export default function ExportPDFButton() {
   };
 
   return (
-    <button
+    <Button
       onClick={handleExport}
       disabled={loading}
-      className="px-4 py-2 bg-blue-600 text-white rounded"
+      variant="solid"
+      color="blue"
+      radius="large"
+      size="2"
+      className="font-bold"
+      style={{ cursor: loading ? "not-allowed" : "pointer" }}
     >
       {loading ? "Exporting..." : "Export PDF"}
-    </button>
+    </Button>
   );
 }
