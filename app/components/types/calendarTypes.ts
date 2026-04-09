@@ -1,3 +1,5 @@
+import { Clash } from "@/app/lib/courseClashFetch";
+
 export type Column = {
   id: string;
   title: string;
@@ -16,8 +18,13 @@ export type Exam = {
 };
 
 export type ClashDetail = {
-  clash: "sameday" | "adjacent";
-  exams: Exam[];
+  clash: "same-day-time" | "sameday" | "adjacent";
+  clashExams: ClashExam[];
+};
+
+export type ClashExam = {
+  exam: Exam;
+  studentsAffected: number;
 };
 
 export type ExamDisplayerProps = {
@@ -48,7 +55,7 @@ export type ExamDisplayerProps = {
   ) => Promise<void>;
   onCloseSplit: () => void;
   onCloseMerge: () => void;
-  clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashColorMap?: Map<number, "orange" | "hotpink" | "red">;
   clashExamsMap?: Map<number, ClashDetail>;
   movingZoneIds?: string[];
 };

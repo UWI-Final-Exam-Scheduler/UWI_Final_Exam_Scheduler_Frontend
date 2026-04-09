@@ -31,7 +31,7 @@ function DroppableSlot({
   isReschedule: boolean;
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
-  clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashColorMap?: Map<number, "orange" | "hotpink" | "red">;
   venueCapacity?: number;
   clashExamsMap?: Map<number, ClashDetail>;
   movingZoneIds?: string[];
@@ -105,7 +105,7 @@ type TimeColumnProps = {
   onMergeExam?: (exam: Exam) => void;
   venues?: Venue[];
   isLoading?: boolean;
-  clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashColorMap?: Map<number, "orange" | "hotpink" | "red">;
   clashExamsMap?: Map<number, ClashDetail>;
   movingZoneIds?: string[];
 };

@@ -11,7 +11,7 @@ type ExamCardProps = {
   isReschedule?: boolean;
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
-  clashColor?: "orange" | "hotpink";
+  clashColor?: "orange" | "hotpink" | "red";
   clashDetail?: ClashDetail;
 };
 
@@ -96,9 +96,7 @@ export default function ExamCardDnD({
   }
 
   const cardWithHover = clashDetail ? (
-    <ExamHoverCard clash={clashDetail.clash} examClashes={clashDetail.exams}>
-      {card}
-    </ExamHoverCard>
+    <ExamHoverCard clashDetail={clashDetail}>{card}</ExamHoverCard>
   ) : (
     card
   );
