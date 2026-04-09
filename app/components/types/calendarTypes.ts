@@ -31,6 +31,10 @@ export type ExamDisplayerProps = {
   pendingMove: PendingMove | null;
   handleConfirmMove: () => void;
   handleCancelMove: () => void;
+  onPreviousDay?: () => void;
+  onNextDay?: () => void;
+  disablePreviousDay?: boolean;
+  disableNextDay?: boolean;
   activeExam: Exam | null;
   examSplits: Exam[];
   splitDialogOpen: boolean;

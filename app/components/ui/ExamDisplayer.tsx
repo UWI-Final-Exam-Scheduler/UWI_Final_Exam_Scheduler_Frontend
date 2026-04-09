@@ -5,6 +5,8 @@ import ScheduleAlert from "./ScheduleAlert";
 import { ExamDisplayerProps } from "../types/calendarTypes";
 import MergeExamDialog from "./MergeExamDialog";
 import SplitExamDialog from "./SplitExamDialog";
+import { IconButton } from "@radix-ui/themes";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ExamDisplayer({
   selectedDay,
@@ -17,6 +19,10 @@ export default function ExamDisplayer({
   isLoading,
   handleConfirmMove,
   handleCancelMove,
+  onPreviousDay,
+  onNextDay,
+  disablePreviousDay,
+  disableNextDay,
   onSplitExam,
   onMergeExam,
   splitDialogOpen,
@@ -35,9 +41,37 @@ export default function ExamDisplayer({
 
   return (
     <div>
-      <h1 className="mb-4 text-center text-2xl font-bold text-gray-800">
-        Exams on {selectedDay.toLocaleDateString()}
-      </h1>
+      <div className="mb-4 flex items-center justify-center gap-4">
+        <IconButton
+          variant="soft"
+          color="gray"
+          radius="full"
+          size="3"
+          onClick={onPreviousDay}
+          disabled={disablePreviousDay}
+          aria-label="Previous day"
+          style={{ cursor: "pointer" }}
+        >
+          <ChevronLeft size={18} />
+        </IconButton>
+
+        <h1 className="text-center text-2xl font-bold text-gray-800">
+          Exams on {selectedDay.toLocaleDateString()}
+        </h1>
+
+        <IconButton
+          variant="soft"
+          color="gray"
+          radius="full"
+          size="3"
+          onClick={onNextDay}
+          disabled={disableNextDay}
+          aria-label="Next day"
+          style={{ cursor: "pointer" }}
+        >
+          <ChevronRight size={18} />
+        </IconButton>
+      </div>
       {pendingMove && (
         <ScheduleAlert
           open={alertOpen}
@@ -72,24 +106,26 @@ export default function ExamDisplayer({
         venues={venues}
       />
       <div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 p-4">
-          {timeColumns.map((timecolumn) => (
-            <TimeColumn
-              key={timecolumn.id}
-              column={timecolumn}
-              venues={venues}
-              isLoading={isLoading}
-              allExams={[...(exams ?? []), ...(rescheduleExams ?? [])]}
-              onSplitExam={onSplitExam}
-              onMergeExam={onMergeExam}
-              exams={(exams ?? []).filter(
-                (exam) => exam.timeColumnId === timecolumn.id,
-              )}
-              clashColorMap={clashColorMap} //
-              clashExamsMap={clashExamsMap} // pass down clash details for hover cards
-              movingZoneIds={movingZoneIds}
-            />
-          ))}
+        <div className="p-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {timeColumns.map((timecolumn) => (
+              <TimeColumn
+                key={timecolumn.id}
+                column={timecolumn}
+                venues={venues}
+                isLoading={isLoading}
+                allExams={[...(exams ?? []), ...(rescheduleExams ?? [])]}
+                onSplitExam={onSplitExam}
+                onMergeExam={onMergeExam}
+                exams={(exams ?? []).filter(
+                  (exam) => exam.timeColumnId === timecolumn.id,
+                )}
+                clashColorMap={clashColorMap} //
+                clashExamsMap={clashExamsMap} // pass down clash details for hover cards
+                movingZoneIds={movingZoneIds}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -27,6 +27,15 @@ type CalendarProps = {
   endMonth?: Date;
 };
 
+function atStartOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isWeekend(date: Date): boolean {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
 function parseDateFromParams(searchParams: URLSearchParams): Date | undefined {
   const day = Number(searchParams.get("date"));
   const month = Number(searchParams.get("month"));
@@ -50,6 +59,10 @@ function parseDateFromParams(searchParams: URLSearchParams): Date | undefined {
     parsed.getMonth() !== month - 1 ||
     parsed.getDate() !== day
   ) {
+    return undefined;
+  }
+
+  if (isWeekend(parsed)) {
     return undefined;
   }
 
@@ -124,7 +137,73 @@ export default function CalendarDayPicker({
     nextDayExams,
   );
 
+  const examPeriodStart =
+    haveExamsDay.length > 0
+      ? atStartOfDay(new Date(Math.min(...haveExamsDay.map((d) => d.getTime()))))
+      : undefined;
+  const examPeriodEnd =
+    haveExamsDay.length > 0
+      ? atStartOfDay(new Date(Math.max(...haveExamsDay.map((d) => d.getTime()))))
+      : undefined;
+
+  const isWithinExamPeriod = (date: Date) => {
+    const day = atStartOfDay(date);
+    if (examPeriodStart && day < examPeriodStart) return false;
+    if (examPeriodEnd && day > examPeriodEnd) return false;
+    return true;
+  };
+
   const rescheduleColumn = columns.find((col) => col.id === "0");
+
+  const applySelectedDay = (day: Date) => {
+    if (!isWithinExamPeriod(day) || isWeekend(day)) {
+      return;
+    }
+
+    // Update view immediately so exam fetch/render starts without waiting on routing.
+    setSelected(day);
+    setIsSelected(true);
+    setIsCollapsed(true);
+    setHasInteracted(true);
+
+    const params = new URLSearchParams();
+    params.set("date", String(day.getDate()));
+    params.set("month", String(day.getMonth() + 1));
+    params.set("year", String(day.getFullYear()));
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const getAdjacentWeekdayWithinPeriod = (
+    baseDate: Date,
+    offsetDays: number,
+  ): Date | undefined => {
+    const next = new Date(baseDate);
+    const step = offsetDays < 0 ? -1 : 1;
+
+    while (true) {
+      next.setDate(next.getDate() + step);
+      if (!isWithinExamPeriod(next)) {
+        return undefined;
+      }
+      if (!isWeekend(next)) {
+        return new Date(next);
+      }
+    }
+  };
+
+  const goToAdjacentDay = (offsetDays: number) => {
+    if (!selected) return;
+    const next = getAdjacentWeekdayWithinPeriod(selected, offsetDays);
+    if (!next) return;
+    applySelectedDay(next);
+  };
+
+  const previousNavigableDay = selected
+    ? getAdjacentWeekdayWithinPeriod(selected, -1)
+    : undefined;
+  const nextNavigableDay = selected
+    ? getAdjacentWeekdayWithinPeriod(selected, 1)
+    : undefined;
 
   const handleDaySelect = (selectedDay: Date | undefined) => {
     if (!selectedDay) {
@@ -132,17 +211,15 @@ export default function CalendarDayPicker({
       return;
     }
 
-    // Update view immediately so exam fetch/render starts without waiting on routing.
-    setSelected(selectedDay);
-    setIsSelected(true);
-    setIsCollapsed(true);
-    setHasInteracted(true);
+    if (isWeekend(selectedDay)) {
+      return;
+    }
 
-    const params = new URLSearchParams();
-    params.set("date", String(selectedDay.getDate()));
-    params.set("month", String(selectedDay.getMonth() + 1));
-    params.set("year", String(selectedDay.getFullYear()));
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    if (!isWithinExamPeriod(selectedDay)) {
+      return;
+    }
+
+    applySelectedDay(selectedDay);
   };
 
   const selectAnotherDay = () => {
@@ -255,6 +332,15 @@ export default function CalendarDayPicker({
                   defaultMonth={startMonthBound}
                   selected={selected}
                   onSelect={handleDaySelect}
+                  disabled={
+                    examPeriodStart && examPeriodEnd
+                      ? [
+                          { dayOfWeek: [0, 6] },
+                          { before: examPeriodStart },
+                          { after: examPeriodEnd },
+                        ]
+                      : [{ dayOfWeek: [0, 6] }]
+                  }
                   startMonth={startMonthBound}
                   endMonth={endMonthBound}
                   modifiers={{ hasExam: haveExamsDay }}
@@ -281,10 +367,12 @@ export default function CalendarDayPicker({
 
           {isSelected && selected && isCollapsed && (
             <div className="motion-preset-slide-up">
-              <CustomButton
-                buttonname="Select Another Day"
-                onclick={selectAnotherDay}
-              />
+              <div className="mb-3">
+                <CustomButton
+                  buttonname="Select Another Day"
+                  onclick={selectAnotherDay}
+                />
+              </div>
               <ExamDisplayer
                 selectedDay={selected}
                 exams={exams}
@@ -295,6 +383,10 @@ export default function CalendarDayPicker({
                 isLoading={isLoading}
                 handleConfirmMove={handleConfirmMove}
                 handleCancelMove={handleCancelMove}
+                onPreviousDay={() => goToAdjacentDay(-1)}
+                onNextDay={() => goToAdjacentDay(1)}
+                disablePreviousDay={!previousNavigableDay}
+                disableNextDay={!nextNavigableDay}
                 activeExam={activeExam}
                 examSplits={examSplits}
                 splitDialogOpen={splitDialogOpen}
