@@ -47,6 +47,7 @@ export default function ExamCardDnD({
     .sort((a, b) => a.id - b.id);
   const splitIndex = splitsForCourse.findIndex((e) => e.id === exam.id) + 1;
   const splitTotal = splitsForCourse.length;
+  const examLengthLabel = `${exam.exam_length} hrs`;
 
   const card = (
     <div
@@ -58,26 +59,31 @@ export default function ExamCardDnD({
     >
       <Card
         variant="surface"
-        className="h-7"
+        className="min-h-12"
         style={clashColor ? { backgroundColor: clashColor } : undefined}
       >
-        <Flex align="center" justify="between" className="w-full gap-1">
-          <div className="flex min-w-0 items-center gap-1">
-            <Text size="1" weight="bold" className="truncate">
-              {exam.courseCode}
+        <div className="flex flex-col gap-0.5">
+          <Flex align="center" justify="between" className="w-full gap-1">
+            <div className="flex min-w-0 items-center gap-1">
+              <Text size="1" weight="bold" className="truncate">
+                {exam.courseCode}
+              </Text>
+              {hasSplits && splitIndex > 0 && (
+                <span
+                  className={`${isReschedule ? "text-[9px]" : "text-[10px]"} font-bold text-gray-600 whitespace-nowrap`}
+                >
+                  Split:{splitIndex}/{splitTotal}
+                </span>
+              )}
+            </div>
+            <Text size="1" weight="medium" className="shrink-0">
+              {exam.number_of_students}
             </Text>
-            {hasSplits && splitIndex > 0 && (
-              <span
-                className={`${isReschedule ? "text-[9px]" : "text-[10px]"} font-bold text-gray-600 whitespace-nowrap`}
-              >
-                Split:{splitIndex}/{splitTotal}
-              </span>
-            )}
-          </div>
-          <Text size="1" weight="medium" className="shrink-0">
-            {exam.number_of_students}
+          </Flex>
+          <Text size="1" className="text-gray-600">
+            {examLengthLabel}
           </Text>
-        </Flex>
+        </div>
       </Card>
     </div>
   );
