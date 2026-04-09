@@ -139,11 +139,15 @@ export default function CalendarDayPicker({
 
   const examPeriodStart =
     haveExamsDay.length > 0
-      ? atStartOfDay(new Date(Math.min(...haveExamsDay.map((d) => d.getTime()))))
+      ? atStartOfDay(
+          new Date(Math.min(...haveExamsDay.map((d) => d.getTime()))),
+        )
       : undefined;
   const examPeriodEnd =
     haveExamsDay.length > 0
-      ? atStartOfDay(new Date(Math.max(...haveExamsDay.map((d) => d.getTime()))))
+      ? atStartOfDay(
+          new Date(Math.max(...haveExamsDay.map((d) => d.getTime()))),
+        )
       : undefined;
 
   const isWithinExamPeriod = (date: Date) => {
