@@ -114,7 +114,7 @@ export default function Courses() {
       )}
 
       <main className={showSidebar ? "flex-1" : "w-full"}>
-        <h1 className="text-2xl font-bold mb-2">Courses Page</h1>
+        <h1 className="text-2xl font-bold mb-2">Courses</h1>
 
         <div className="w-full mb-4 flex flex-col md:flex-row gap-3 md:items-center">
           <div className="w-full md:max-w-105">

@@ -1,3 +1,5 @@
+import { Clash } from "@/app/lib/courseClashFetch";
+
 export type Column = {
   id: string;
   title: string;
@@ -16,8 +18,13 @@ export type Exam = {
 };
 
 export type ClashDetail = {
-  clash: "sameday" | "adjacent";
-  exams: Exam[];
+  clash: "same-day-time" | "sameday" | "adjacent";
+  clashExams: ClashExam[];
+};
+
+export type ClashExam = {
+  exam: Exam;
+  studentsAffected: number;
 };
 
 export type ExamDisplayerProps = {
@@ -31,6 +38,10 @@ export type ExamDisplayerProps = {
   pendingMove: PendingMove | null;
   handleConfirmMove: () => void;
   handleCancelMove: () => void;
+  onPreviousDay?: () => void;
+  onNextDay?: () => void;
+  disablePreviousDay?: boolean;
+  disableNextDay?: boolean;
   activeExam: Exam | null;
   examSplits: Exam[];
   splitDialogOpen: boolean;
@@ -38,11 +49,15 @@ export type ExamDisplayerProps = {
   onSplitExam: (exam: Exam) => void;
   onMergeExam: (exam: Exam) => void;
   onSplitConfirm: (splits: { number_of_students: number }[]) => Promise<void>;
-  onMergeConfirm: (examIds: number[]) => Promise<void>;
+  onMergeConfirm: (
+    examIds: number[],
+    moveToReschedule?: boolean,
+  ) => Promise<void>;
   onCloseSplit: () => void;
   onCloseMerge: () => void;
-  clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashColorMap?: Map<number, "orange" | "hotpink" | "red">;
   clashExamsMap?: Map<number, ClashDetail>;
+  movingZoneIds?: string[];
 };
 
 export type PendingMove = {

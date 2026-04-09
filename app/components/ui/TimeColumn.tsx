@@ -22,6 +22,7 @@ function DroppableSlot({
   clashColorMap,
   venueCapacity,
   clashExamsMap,
+  movingZoneIds,
 }: {
   droppableId: string;
   label?: string;
@@ -30,11 +31,13 @@ function DroppableSlot({
   isReschedule: boolean;
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
-  clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashColorMap?: Map<number, "orange" | "hotpink" | "red">;
   venueCapacity?: number;
   clashExamsMap?: Map<number, ClashDetail>;
+  movingZoneIds?: string[];
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+  const isUpdatingThisSlot = (movingZoneIds ?? []).includes(droppableId);
 
   const getExamDragId = (exam: Exam, index: number) =>
     `${droppableId}::${exam.id}::${exam.courseCode}::${exam.venue_id}::${exam.time}::${index}`;
@@ -68,7 +71,11 @@ function DroppableSlot({
             : "bg-gray-50 border-gray-200"
         }`}
       >
-        {exams.length === 0 ? (
+        {isUpdatingThisSlot ? (
+          <div className="flex items-center justify-center py-3 text-xs text-gray-500">
+            <Spinner className="mr-2" /> Updating...
+          </div>
+        ) : exams.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-2">Drop here</p>
         ) : (
           exams.map((exam, index) => (
@@ -80,7 +87,7 @@ function DroppableSlot({
               isReschedule={isReschedule}
               onSplitExam={onSplitExam}
               onMergeExam={onMergeExam}
-              clashColor={clashColorMap?.get(exam.id)} //
+              clashColor={clashColorMap?.get(exam.id)}
               clashDetail={clashExamsMap?.get(exam.id)}
             />
           ))
@@ -98,8 +105,9 @@ type TimeColumnProps = {
   onMergeExam?: (exam: Exam) => void;
   venues?: Venue[];
   isLoading?: boolean;
-  clashColorMap?: Map<number, "orange" | "hotpink">;
+  clashColorMap?: Map<number, "orange" | "hotpink" | "red">;
   clashExamsMap?: Map<number, ClashDetail>;
+  movingZoneIds?: string[];
 };
 
 export default function TimeColumn({
@@ -112,6 +120,7 @@ export default function TimeColumn({
   isLoading,
   clashColorMap,
   clashExamsMap,
+  movingZoneIds,
 }: TimeColumnProps) {
   const isReschedule = column.id === "0";
 
@@ -138,6 +147,7 @@ export default function TimeColumn({
           onMergeExam={onMergeExam}
           clashColorMap={clashColorMap}
           clashExamsMap={clashExamsMap}
+          movingZoneIds={movingZoneIds}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -154,6 +164,7 @@ export default function TimeColumn({
               clashColorMap={clashColorMap}
               venueCapacity={venue.capacity}
               clashExamsMap={clashExamsMap}
+              movingZoneIds={movingZoneIds}
             />
           ))}
         </div>

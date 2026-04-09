@@ -20,20 +20,68 @@ import SplitConflictDialog from "./SplitConflictDialog";
 import MergeExamDialog from "./MergeExamDialog";
 import SplitExamDialog from "./SplitExamDialog";
 import { Exam } from "../types/calendarTypes";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type CalendarProps = {
   startMonth?: Date;
   endMonth?: Date;
 };
 
+function atStartOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isWeekend(date: Date): boolean {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+
+function parseDateFromParams(searchParams: URLSearchParams): Date | undefined {
+  const day = Number(searchParams.get("date"));
+  const month = Number(searchParams.get("month"));
+  const year = Number(searchParams.get("year"));
+
+  if (
+    !Number.isInteger(day) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(year)
+  ) {
+    return undefined;
+  }
+
+  if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900) {
+    return undefined;
+  }
+
+  const parsed = new Date(year, month - 1, day);
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return undefined;
+  }
+
+  if (isWeekend(parsed)) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
 export default function CalendarDayPicker({
   startMonth,
   endMonth,
 }: CalendarProps) {
-  const [selected, setSelected] = useState<Date | undefined>(undefined);
-  const [isSelected, setIsSelected] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const initialSelected = parseDateFromParams(searchParams);
+
+  const [selected, setSelected] = useState<Date | undefined>(initialSelected);
+  const [isSelected, setIsSelected] = useState(Boolean(initialSelected));
+  const [isCollapsed, setIsCollapsed] = useState(Boolean(initialSelected));
+  const [hasInteracted, setHasInteracted] = useState(Boolean(initialSelected));
   const [activeDragExam, setActiveDragExam] = useState<Exam | null>(null);
 
   const {
@@ -48,6 +96,7 @@ export default function CalendarDayPicker({
     handleConfirmMove,
     handleCancelMove,
     isLoading,
+    isRescheduleLoading,
     isInitialLoading,
     activeExam,
     examSplits,
@@ -75,7 +124,8 @@ export default function CalendarDayPicker({
     splitConflictOpen,
     splitConflictInfo,
     handleDismissSplitConflict,
-    allScheduledExams, // ← ADD THIS LINE
+    allScheduledExams,
+    movingZoneIds,
   } = useRefineCalendar(selected);
 
   // Fetch exams on day before and day after selected date
@@ -87,19 +137,101 @@ export default function CalendarDayPicker({
     nextDayExams,
   );
 
+  const examPeriodStart =
+    haveExamsDay.length > 0
+      ? atStartOfDay(
+          new Date(Math.min(...haveExamsDay.map((d) => d.getTime()))),
+        )
+      : undefined;
+  const examPeriodEnd =
+    haveExamsDay.length > 0
+      ? atStartOfDay(
+          new Date(Math.max(...haveExamsDay.map((d) => d.getTime()))),
+        )
+      : undefined;
+
+  const isWithinExamPeriod = (date: Date) => {
+    const day = atStartOfDay(date);
+    if (examPeriodStart && day < examPeriodStart) return false;
+    if (examPeriodEnd && day > examPeriodEnd) return false;
+    return true;
+  };
+
   const rescheduleColumn = columns.find((col) => col.id === "0");
 
-  const handleDaySelect = (selectedDay: Date | undefined) => {
-    setSelected(selectedDay);
+  const applySelectedDay = (day: Date) => {
+    if (!isWithinExamPeriod(day) || isWeekend(day)) {
+      return;
+    }
+
+    // Update view immediately so exam fetch/render starts without waiting on routing.
+    setSelected(day);
     setIsSelected(true);
     setIsCollapsed(true);
     setHasInteracted(true);
+
+    const params = new URLSearchParams();
+    params.set("date", String(day.getDate()));
+    params.set("month", String(day.getMonth() + 1));
+    params.set("year", String(day.getFullYear()));
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const getAdjacentWeekdayWithinPeriod = (
+    baseDate: Date,
+    offsetDays: number,
+  ): Date | undefined => {
+    const next = new Date(baseDate);
+    const step = offsetDays < 0 ? -1 : 1;
+
+    while (true) {
+      next.setDate(next.getDate() + step);
+      if (!isWithinExamPeriod(next)) {
+        return undefined;
+      }
+      if (!isWeekend(next)) {
+        return new Date(next);
+      }
+    }
+  };
+
+  const goToAdjacentDay = (offsetDays: number) => {
+    if (!selected) return;
+    const next = getAdjacentWeekdayWithinPeriod(selected, offsetDays);
+    if (!next) return;
+    applySelectedDay(next);
+  };
+
+  const previousNavigableDay = selected
+    ? getAdjacentWeekdayWithinPeriod(selected, -1)
+    : undefined;
+  const nextNavigableDay = selected
+    ? getAdjacentWeekdayWithinPeriod(selected, 1)
+    : undefined;
+
+  const handleDaySelect = (selectedDay: Date | undefined) => {
+    if (!selectedDay) {
+      selectAnotherDay();
+      return;
+    }
+
+    if (isWeekend(selectedDay)) {
+      return;
+    }
+
+    if (!isWithinExamPeriod(selectedDay)) {
+      return;
+    }
+
+    applySelectedDay(selectedDay);
   };
 
   const selectAnotherDay = () => {
     setIsSelected(false);
     setIsCollapsed(false);
     setSelected(undefined);
+    setHasInteracted(true);
+    router.replace(pathname, { scroll: false });
   };
 
   // added these to avoid layering issue when dragging an exam so it can be above the reschedule column
@@ -204,6 +336,15 @@ export default function CalendarDayPicker({
                   defaultMonth={startMonthBound}
                   selected={selected}
                   onSelect={handleDaySelect}
+                  disabled={
+                    examPeriodStart && examPeriodEnd
+                      ? [
+                          { dayOfWeek: [0, 6] },
+                          { before: examPeriodStart },
+                          { after: examPeriodEnd },
+                        ]
+                      : [{ dayOfWeek: [0, 6] }]
+                  }
                   startMonth={startMonthBound}
                   endMonth={endMonthBound}
                   modifiers={{ hasExam: haveExamsDay }}
@@ -230,10 +371,12 @@ export default function CalendarDayPicker({
 
           {isSelected && selected && isCollapsed && (
             <div className="motion-preset-slide-up">
-              <CustomButton
-                buttonname="Select Another Day"
-                onclick={selectAnotherDay}
-              />
+              <div className="mb-3">
+                <CustomButton
+                  buttonname="Select Another Day"
+                  onclick={selectAnotherDay}
+                />
+              </div>
               <ExamDisplayer
                 selectedDay={selected}
                 exams={exams}
@@ -244,6 +387,10 @@ export default function CalendarDayPicker({
                 isLoading={isLoading}
                 handleConfirmMove={handleConfirmMove}
                 handleCancelMove={handleCancelMove}
+                onPreviousDay={() => goToAdjacentDay(-1)}
+                onNextDay={() => goToAdjacentDay(1)}
+                disablePreviousDay={!previousNavigableDay}
+                disableNextDay={!nextNavigableDay}
                 activeExam={activeExam}
                 examSplits={examSplits}
                 splitDialogOpen={splitDialogOpen}
@@ -257,6 +404,7 @@ export default function CalendarDayPicker({
                 clashColorMap={colorMap} //
                 clashExamsMap={clashExamsMap}
                 rescheduleExams={rescheduleExams ?? []}
+                movingZoneIds={movingZoneIds}
               />
             </div>
           )}
@@ -264,38 +412,28 @@ export default function CalendarDayPicker({
 
         {rescheduleColumn && (
           <aside className="w-48 shrink-0 sticky top-4 self-start">
-            {isInitialLoading ? (
-              <div className="flex items-center justify-center h-40">
-                <div className="text-center">
-                  <Spinner className="mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">
-                    Loading Reschedule Column...
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <TimeColumn
-                column={rescheduleColumn}
-                exams={rescheduleExams ?? []}
-                allExams={(() => {
-                  const combined = [
-                    ...(allScheduledExams ?? []),
-                    ...(rescheduleExams ?? []),
-                  ];
-                  const seen = new Set<number>();
-                  return combined.filter((exam) => {
-                    if (seen.has(exam.id)) return false;
-                    seen.add(exam.id);
-                    return true;
-                  });
-                })()}
-                isLoading={isLoading}
-                onSplitExam={onRescheduleExamSplit}
-                onMergeExam={onRescheduleExamMerge}
-                clashColorMap={colorMap}
-                clashExamsMap={clashExamsMap}
-              />
-            )}
+            <TimeColumn
+              column={rescheduleColumn}
+              exams={rescheduleExams ?? []}
+              allExams={(() => {
+                const combined = [
+                  ...(allScheduledExams ?? []),
+                  ...(rescheduleExams ?? []),
+                ];
+                const seen = new Set<number>();
+                return combined.filter((exam) => {
+                  if (seen.has(exam.id)) return false;
+                  seen.add(exam.id);
+                  return true;
+                });
+              })()}
+              // Show loading inside reschedule column only when its own data is fetching.
+              isLoading={isRescheduleLoading}
+              onSplitExam={onRescheduleExamSplit}
+              onMergeExam={onRescheduleExamMerge}
+              clashColorMap={colorMap}
+              clashExamsMap={clashExamsMap}
+            />
           </aside>
         )}
 
@@ -326,6 +464,7 @@ export default function CalendarDayPicker({
           open={rescheduleMergeDialogOpen}
           onConfirm={onRescheduleExamMergeConfirm}
           onCancel={onCloseRescheduleMerge}
+          venues={venues}
         />
       </div>
       <DragOverlay zIndex={9999}>

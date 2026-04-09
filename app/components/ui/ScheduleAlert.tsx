@@ -31,22 +31,24 @@ export default function ScheduleAlert({
           <AlertDialog.Description className="mb-6">
             {message}
           </AlertDialog.Description>
-          <AlertDialog.Action asChild>
-            <button
-              onClick={onConfirm}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Confirm
-            </button>
-          </AlertDialog.Action>
-          <AlertDialog.Cancel asChild>
-            <button
-              onClick={onCancel}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </AlertDialog.Cancel>
+          <div className="flex items-center gap-3">
+            <AlertDialog.Action asChild>
+              <button
+                onClick={onConfirm}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Confirm
+              </button>
+            </AlertDialog.Action>
+            <AlertDialog.Cancel asChild>
+              <button
+                onClick={onCancel}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </AlertDialog.Cancel>
+          </div>
         </AlertDialog.Content>
       </AlertDialog.Portal>
     </AlertDialog.Root>

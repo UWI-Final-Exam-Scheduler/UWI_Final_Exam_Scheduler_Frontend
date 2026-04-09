@@ -50,6 +50,7 @@ export function useCalendarExamDrag(
 ) {
   const [alertOpen, setAlertOpen] = useState(false);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+  const [movingZoneIds, setMovingZoneIds] = useState<string[]>([]);
 
   const [capacityWarningOpen, setCapacityWarningOpen] = useState(false);
   const [capacityWarningInfo, setCapacityWarningInfo] =
@@ -109,32 +110,36 @@ export function useCalendarExamDrag(
         : null;
     const targetTime = newTimeColumnId !== "0" ? Number(newTimeColumnId) : null;
 
-    // all scheduled splits of the same course must share the same day and time.
+    // All scheduled splits of the same course must share one exact date+time slot.
     if (newTimeColumnId !== "0") {
+      const normalize = (code: string) => code.trim().toUpperCase();
+
       const scheduledById = new Map<number, Exam>();
       [...allScheduledExams, ...exams].forEach((e) => {
-        if (e.id) {
-          scheduledById.set(e.id, e);
-        }
+        if (e.id && e.exam_date) scheduledById.set(e.id, e);
       });
 
       const otherScheduledSplits = Array.from(scheduledById.values()).filter(
         (e) =>
-          e.courseCode === exam.courseCode &&
-          String(e.id) !== String(exam.id) &&
-          !!e.exam_date,
+          normalize(e.courseCode) === normalize(exam.courseCode) &&
+          String(e.id) !== String(exam.id),
       );
 
       if (otherScheduledSplits.length > 0) {
-        const baseline = otherScheduledSplits[0];
-        const baselineDate = baseline.exam_date;
-        const baselineTime = Number(baseline.time);
+        const targetKey = `${targetDateStr}|${targetTime}`;
 
-        if (targetDateStr !== baselineDate || targetTime !== baselineTime) {
+        // Distinct scheduled slots already used by sibling splits
+        const existingKeys = new Set(
+          otherScheduledSplits.map((e) => `${e.exam_date}|${Number(e.time)}`),
+        );
+
+        // Must match exactly one of the already-scheduled split slots
+        if (!existingKeys.has(targetKey)) {
+          const first = otherScheduledSplits[0];
           setSplitConflictInfo({
             courseCode: exam.courseCode,
-            existingTime: baselineTime,
-            existingDate: baselineDate,
+            existingTime: Number(first.time),
+            existingDate: first.exam_date,
           });
           setSplitConflictOpen(true);
           return;
@@ -197,24 +202,35 @@ export function useCalendarExamDrag(
   async function handleConfirmMove() {
     if (!pendingMove) return;
 
-    const isMovingToReschedule = pendingMove.toColumnId === "0";
+    const fromZoneId =
+      pendingMove.fromColumnId === "0"
+        ? "0"
+        : `${pendingMove.fromColumnId}-${pendingMove.exam.venue_id}`;
 
-    const isMovingFromReschedule = pendingMove.fromColumnId === "0";
+    const toZoneId =
+      pendingMove.toColumnId === "0"
+        ? "0"
+        : `${pendingMove.toColumnId}-${pendingMove.toVenueId}`;
 
-    const currentDate = selectedDateRef.current;
+    setMovingZoneIds([fromZoneId, toZoneId]);
 
-    if (isMovingToReschedule) {
-      await moveActions.handleMoveToReschedule(pendingMove);
-    } else if (isMovingFromReschedule && currentDate) {
-      await moveActions.handleMoveFromReschedule(pendingMove, currentDate);
-    } else {
-      await moveActions.handleSameDayTimeChange(pendingMove);
+    try {
+      const isMovingToReschedule = pendingMove.toColumnId === "0";
+      const isMovingFromReschedule = pendingMove.fromColumnId === "0";
+      const currentDate = selectedDateRef.current;
+
+      if (isMovingToReschedule) {
+        await moveActions.handleMoveToReschedule(pendingMove);
+      } else if (isMovingFromReschedule && currentDate) {
+        await moveActions.handleMoveFromReschedule(pendingMove, currentDate);
+      } else {
+        await moveActions.handleSameDayTimeChange(pendingMove);
+      }
+    } finally {
+      setMovingZoneIds([]);
+      setPendingMove(null);
+      setAlertOpen(false);
     }
-
-    await fetchDaysWithExams();
-
-    setPendingMove(null);
-    setAlertOpen(false);
   }
 
   function handleCancelMove() {
@@ -234,5 +250,6 @@ export function useCalendarExamDrag(
     splitConflictOpen,
     splitConflictInfo,
     handleDismissSplitConflict,
+    movingZoneIds,
   };
 }

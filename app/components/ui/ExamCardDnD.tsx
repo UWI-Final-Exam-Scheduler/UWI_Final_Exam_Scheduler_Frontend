@@ -11,7 +11,7 @@ type ExamCardProps = {
   isReschedule?: boolean;
   onSplitExam?: (exam: Exam) => void;
   onMergeExam?: (exam: Exam) => void;
-  clashColor?: "orange" | "hotpink";
+  clashColor?: "orange" | "hotpink" | "red";
   clashDetail?: ClashDetail;
 };
 
@@ -34,8 +34,11 @@ export default function ExamCardDnD({
   const style = transform
     ? {
         transform: `translate(${transform.x}px, ${transform.y}px)`,
+        opacity: isDragging ? 0 : 1,
       }
-    : undefined;
+    : isDragging
+      ? { opacity: 0 }
+      : undefined;
 
   const hasSplits =
     allExams.filter((e) => e.courseCode === exam.courseCode).length > 1;
@@ -93,9 +96,7 @@ export default function ExamCardDnD({
   }
 
   const cardWithHover = clashDetail ? (
-    <ExamHoverCard clash={clashDetail.clash} examClashes={clashDetail.exams}>
-      {card}
-    </ExamHoverCard>
+    <ExamHoverCard clashDetail={clashDetail}>{card}</ExamHoverCard>
   ) : (
     card
   );

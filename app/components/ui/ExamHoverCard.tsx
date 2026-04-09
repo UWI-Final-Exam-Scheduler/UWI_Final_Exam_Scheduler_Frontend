@@ -1,27 +1,33 @@
 import { HoverCard } from "radix-ui";
-import { Exam } from "../types/calendarTypes";
+import { ClashDetail } from "../types/calendarTypes";
 
 type ExamHoverCardProps = {
-  clash: "sameday" | "adjacent";
-  examClashes: Exam[];
+  clashDetail: ClashDetail;
   children: React.ReactNode;
 };
 
 export default function ExamHoverCard({
-  clash,
-  examClashes,
+  clashDetail,
   children,
 }: ExamHoverCardProps) {
-  // Label and accent colour match the existing card colour coding.
+  const { clash, clashExams } = clashDetail;
+
   const label =
-    clash === "sameday" ? "Same-Day Clashes" : "Adjacent-Day Clashes";
-  const badgeColor = clash === "sameday" ? "#f01f88" : "orange"; // hotpink / orange
+    clash === "same-day-time"
+      ? "Same Time & Day Clash"
+      : clash === "sameday"
+        ? "Same-Day Clash"
+        : "Adjacent-Day Clash";
+
+  const badgeColor =
+    clash === "same-day-time"
+      ? "#dc2626" // red
+      : clash === "sameday"
+        ? "#f01f88" // hotpink
+        : "orange";
 
   return (
-    <HoverCard.Root
-      openDelay={500}
-      closeDelay={200} // short delay so it doesn't vanish instantly
-    >
+    <HoverCard.Root openDelay={500} closeDelay={200}>
       <HoverCard.Trigger asChild>{children}</HoverCard.Trigger>
 
       <HoverCard.Portal>
@@ -31,7 +37,7 @@ export default function ExamHoverCard({
           sideOffset={6}
           className="
             z-50 rounded-lg border border-gray-200 bg-white shadow-md p-2
-            max-w-[180px] max-h-[160px] overflow-y-auto
+            max-w-[200px] max-h-[160px] overflow-y-auto
           "
         >
           <HoverCard.Arrow className="fill-gray-200" />
@@ -42,7 +48,7 @@ export default function ExamHoverCard({
             {label}
           </div>
           <ul className="flex flex-col gap-1">
-            {examClashes.map((e) => (
+            {clashExams.map(({ exam: e, studentsAffected }) => (
               <li
                 key={e.id}
                 className="flex justify-between gap-2 text-xs bg-gray-100 rounded px-1.5 py-0.5"
@@ -51,7 +57,7 @@ export default function ExamHoverCard({
                   {e.courseCode}
                 </span>
                 <span className="text-gray-600 shrink-0">
-                  {e.number_of_students}
+                  {studentsAffected} affected
                 </span>
               </li>
             ))}

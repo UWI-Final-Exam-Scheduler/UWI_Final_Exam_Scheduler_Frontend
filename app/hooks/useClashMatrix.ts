@@ -38,14 +38,29 @@ export function useClashMatrix(
   );
 
   const clashPairsMap = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const { course1, course2 } of data?.conflicting_courses ?? []) {
+    const map = new Map<string, Map<string, number>>();
+    for (const { course1, course2, clash_count } of data?.conflicting_courses ??
+      []) {
       const c1 = normalizeCourseCode(course1);
       const c2 = normalizeCourseCode(course2);
-      if (!map.has(c1)) map.set(c1, new Set());
-      if (!map.has(c2)) map.set(c2, new Set());
-      map.get(c1)!.add(c2);
-      map.get(c2)!.add(c1);
+      if (!map.has(c1)) map.set(c1, new Map());
+      if (!map.has(c2)) map.set(c2, new Map());
+      map.get(c1)!.set(c2, clash_count);
+      map.get(c2)!.set(c1, clash_count);
+    }
+    return map;
+  }, [data]);
+
+  const clashCountMap = useMemo(() => {
+    const map = new Map<string, Map<string, number>>();
+    for (const { course1, course2, clash_count } of data?.conflicting_courses ??
+      []) {
+      const c1 = normalizeCourseCode(course1);
+      const c2 = normalizeCourseCode(course2);
+      if (!map.has(c1)) map.set(c1, new Map());
+      if (!map.has(c2)) map.set(c2, new Map());
+      map.get(c1)!.set(c2, clash_count);
+      map.get(c2)!.set(c1, clash_count);
     }
     return map;
   }, [data]);
@@ -69,6 +84,7 @@ export function useClashMatrix(
         : (data?.percentage_students_affected ?? 0),
     coursesWithClashes,
     clashPairsMap,
+    clashCountMap,
     refetch,
   };
 }

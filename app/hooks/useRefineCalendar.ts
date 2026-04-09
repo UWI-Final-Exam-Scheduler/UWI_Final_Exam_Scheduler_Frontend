@@ -7,15 +7,19 @@ import { useCapacityFlag } from "./useCapacityFlag";
 
 export function useRefineCalendar(date: Date | undefined) {
   const fetchState = useCalendarExamFetch(date);
+  const refreshAfterSplitMerge = async () => {
+    await Promise.all([
+      fetchState.fetchRescheduleExams(),
+      fetchState.refreshSelectedDateExams(),
+      fetchState.fetchDaysWithExams(),
+    ]);
+  };
 
   const moveActions = useCalendarMove(
-    fetchState.exams,
-    fetchState.rescheduleExams,
-    fetchState.setExams,
-    fetchState.setRescheduleExams,
     fetchState.venues,
+    fetchState.fetchRescheduleExams,
+    fetchState.fetchDaysWithExams,
   );
-
   const { occupancyMap, wouldExceedCapacity } = useCapacityFlag(
     fetchState.exams,
     fetchState.venues,
@@ -38,14 +42,22 @@ export function useRefineCalendar(date: Date | undefined) {
     fetchState.setExams,
     fetchState.rescheduleExams,
     fetchState.setRescheduleExams,
-    fetchState.fetchRescheduleExams,
+    refreshAfterSplitMerge,
   );
   const rescheduleSplitMerge = useExamSplitMerge(
     fetchState.rescheduleExams,
     fetchState.setRescheduleExams,
     fetchState.rescheduleExams,
     fetchState.setRescheduleExams,
-    fetchState.fetchRescheduleExams,
+    refreshAfterSplitMerge,
+  );
+
+  const combinedMovingZoneIds = Array.from(
+    new Set([
+      ...(dragState.movingZoneIds ?? []),
+      ...(splitMerge.updatingZoneIds ?? []),
+      ...(rescheduleSplitMerge.updatingZoneIds ?? []),
+    ]),
   );
 
   return {
@@ -65,6 +77,7 @@ export function useRefineCalendar(date: Date | undefined) {
     splitConflictOpen: dragState.splitConflictOpen,
     splitConflictInfo: dragState.splitConflictInfo,
     handleDismissSplitConflict: dragState.handleDismissSplitConflict,
+    movingZoneIds: combinedMovingZoneIds,
     columns: ALL_COLUMNS,
   };
 }

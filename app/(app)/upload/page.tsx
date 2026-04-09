@@ -138,6 +138,29 @@ export default function UploadPage() {
         onFileSelect={handleUpload}
         onCancelUpload={cancelUpload}
       />
+
+      <section className="mt-6 rounded-lg border border-blue-100 bg-blue-50/60 p-4">
+        <h2 className="text-sm font-semibold text-blue-900">Upload Guide</h2>
+        <p className="mt-2 text-sm text-blue-900">
+          Note: Documents must include a relevant keyword in the filename. For
+          example, a course listing file should be named{" "}
+          <strong>Courses.csv</strong>, and a past timetable file should be
+          named <strong>UWI Timetable Cross Reference.pdf</strong>.
+        </p>
+
+        <div className="mt-3">
+          <p className="text-sm font-medium text-blue-900">
+            Recommended upload order:
+          </p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-blue-900">
+            <li>Venues.csv</li>
+            <li>Courses.csv</li>
+            <li>Students.csv</li>
+            <li>UWI Timetable Cross Reference.pdf</li>
+            <li>Enrollments.csv</li>
+          </ol>
+        </div>
+      </section>
     </div>
   );
 }

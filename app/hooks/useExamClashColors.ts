@@ -9,7 +9,7 @@ export function useExamClashColors(
   prevDayExams: Exam[],
   nextDayExams: Exam[],
 ): {
-  colorMap: Map<number, "orange" | "hotpink">;
+  colorMap: Map<number, "orange" | "hotpink" | "red">;
   clashExamsMap: Map<number, ClashDetail>;
 } {
   const { absoluteThreshold, percentageThreshold } = useThresholdStates();
@@ -19,71 +19,83 @@ export function useExamClashColors(
   );
 
   return useMemo(() => {
-    const colorMap = new Map<number, "orange" | "hotpink">();
+    const colorMap = new Map<number, "orange" | "hotpink" | "red">();
     const clashExamsMap = new Map<number, ClashDetail>();
 
-    const sameDayCodes = new Set(
-      exams.map((e) => normalizeCourseCode(e.courseCode)),
-    );
-    const adjacentCodes = new Set([
-      ...prevDayExams.map((e) => normalizeCourseCode(e.courseCode)),
-      ...nextDayExams.map((e) => normalizeCourseCode(e.courseCode)),
-    ]);
+    const sameDayByCode = new Map<string, Exam[]>();
+    for (const e of exams) {
+      const c = normalizeCourseCode(e.courseCode);
+      if (!sameDayByCode.has(c)) sameDayByCode.set(c, []);
+      sameDayByCode.get(c)!.push(e);
+    }
+
+    const adjacentByCode = new Map<string, Exam[]>();
+    for (const e of [...prevDayExams, ...nextDayExams]) {
+      const c = normalizeCourseCode(e.courseCode);
+      if (!adjacentByCode.has(c)) adjacentByCode.set(c, []);
+      adjacentByCode.get(c)!.push(e);
+    }
 
     for (const exam of exams) {
       const code = normalizeCourseCode(exam.courseCode);
-      const clashingWith = clashPairsMap.get(code) ?? new Set<string>();
+      const clashingWith = clashPairsMap.get(code) ?? new Map<string, number>();
 
-      // Same-day clash takes priority = hot pink
-      const sameDayByCode = new Map<string, Exam[]>();
-      for (const e of exams) {
-        const code = normalizeCourseCode(e.courseCode);
-        if (!sameDayByCode.has(code)) sameDayByCode.set(code, []);
-        sameDayByCode.get(code)!.push(e);
+      // priority 1 (red): same time slot AND same day
+      const sameTimeClashExams = [...clashingWith.keys()]
+        .filter((c) => c !== code && sameDayByCode.has(c))
+        .flatMap((c) =>
+          sameDayByCode.get(c)!.filter((e) => e.time === exam.time),
+        );
+
+      if (sameTimeClashExams.length > 0) {
+        colorMap.set(exam.id, "red");
+        clashExamsMap.set(exam.id, {
+          clash: "same-day-time",
+          clashExams: sameTimeClashExams.map((e) => ({
+            exam: e,
+            studentsAffected:
+              clashingWith.get(normalizeCourseCode(e.courseCode)) ?? 0,
+          })),
+        });
+        continue;
       }
 
-      // Adjacent day clash = orange
-      const adjacentByCode = new Map<string, Exam[]>();
-      for (const e of [...prevDayExams, ...nextDayExams]) {
-        const code = normalizeCourseCode(e.courseCode);
-        if (!adjacentByCode.has(code)) adjacentByCode.set(code, []);
-        adjacentByCode.get(code)!.push(e);
+      // priority 2 (hotpink): same day, any time
+      const sameDayClashExams = [...clashingWith.keys()]
+        .filter((c) => c !== code && sameDayByCode.has(c))
+        .flatMap((c) => sameDayByCode.get(c)!);
+
+      if (sameDayClashExams.length > 0) {
+        colorMap.set(exam.id, "hotpink");
+        clashExamsMap.set(exam.id, {
+          clash: "sameday",
+          clashExams: sameDayClashExams.map((e) => ({
+            exam: e,
+            studentsAffected:
+              clashingWith.get(normalizeCourseCode(e.courseCode)) ?? 0,
+          })),
+        });
+        continue;
       }
 
-      for (const exam of exams) {
-        const code = normalizeCourseCode(exam.courseCode);
-        const clashingWith = clashPairsMap.get(code) ?? new Set<string>();
+      // priority 3 (orange): adjacent day
+      const adjacentClashExams = [...clashingWith.keys()]
+        .filter((c) => adjacentByCode.has(c))
+        .flatMap((c) => adjacentByCode.get(c)!);
 
-        //  same day clashes takes priority
-        // collecting all same-day exams whose course code clashes with this one.
-        const sameDayClashExams = [...clashingWith]
-          .filter((c) => c !== code && sameDayByCode.has(c))
-          .flatMap((c) => sameDayByCode.get(c)!);
-
-        if (sameDayClashExams.length > 0) {
-          colorMap.set(exam.id, "hotpink");
-          // storing clash detail with type "sameday" and the list of clashing exams.
-          clashExamsMap.set(exam.id, {
-            clash: "sameday",
-            exams: sameDayClashExams,
-          });
-          continue;
-        }
-
-        // adjacent day clashes = orange
-        const adjacentClashExams = [...clashingWith]
-          .filter((c) => adjacentByCode.has(c))
-          .flatMap((c) => adjacentByCode.get(c)!);
-
-        if (adjacentClashExams.length > 0) {
-          colorMap.set(exam.id, "orange");
-          clashExamsMap.set(exam.id, {
-            clash: "adjacent",
-            exams: adjacentClashExams,
-          });
-        }
+      if (adjacentClashExams.length > 0) {
+        colorMap.set(exam.id, "orange");
+        clashExamsMap.set(exam.id, {
+          clash: "adjacent",
+          clashExams: adjacentClashExams.map((e) => ({
+            exam: e,
+            studentsAffected:
+              clashingWith.get(normalizeCourseCode(e.courseCode)) ?? 0,
+          })),
+        });
       }
     }
+
     return { colorMap, clashExamsMap };
   }, [exams, prevDayExams, nextDayExams, clashPairsMap]);
 }
