@@ -38,60 +38,61 @@ export function useExamClashColors(
 
     for (const exam of exams) {
       const code = normalizeCourseCode(exam.courseCode);
+      // clashingWith is Map<courseCode, studentsAffected> from the combined clashPairsMap
       const clashingWith = clashPairsMap.get(code) ?? new Map<string, number>();
 
       // priority 1 (red): same time slot AND same day
-      const sameTimeClashExams = [...clashingWith.keys()]
+      // flatMap returns [] if no split matches the time, or [item] if one does
+      // one entry per clashing course code, no duplicate splits
+      const sameTimeItems = [...clashingWith.keys()]
         .filter((c) => c !== code && sameDayByCode.has(c))
-        .flatMap((c) =>
-          sameDayByCode.get(c)!.filter((e) => e.time === exam.time),
-        );
+        .flatMap((c) => {
+          const first = sameDayByCode.get(c)!.find((e) => e.time === exam.time);
+          return first
+            ? [{ exam: first, studentsAffected: clashingWith.get(c) ?? 0 }]
+            : [];
+        });
 
-      if (sameTimeClashExams.length > 0) {
+      if (sameTimeItems.length > 0) {
         colorMap.set(exam.id, "red");
         clashExamsMap.set(exam.id, {
           clash: "same-day-time",
-          clashExams: sameTimeClashExams.map((e) => ({
-            exam: e,
-            studentsAffected:
-              clashingWith.get(normalizeCourseCode(e.courseCode)) ?? 0,
-          })),
+          clashExams: sameTimeItems,
         });
         continue;
       }
 
       // priority 2 (hotpink): same day, any time
-      const sameDayClashExams = [...clashingWith.keys()]
+      // .map() over course codes, one entry per course, first split is representative
+      const sameDayItems = [...clashingWith.keys()]
         .filter((c) => c !== code && sameDayByCode.has(c))
-        .flatMap((c) => sameDayByCode.get(c)!);
+        .map((c) => ({
+          exam: sameDayByCode.get(c)![0],
+          studentsAffected: clashingWith.get(c) ?? 0,
+        }));
 
-      if (sameDayClashExams.length > 0) {
+      if (sameDayItems.length > 0) {
         colorMap.set(exam.id, "hotpink");
         clashExamsMap.set(exam.id, {
           clash: "sameday",
-          clashExams: sameDayClashExams.map((e) => ({
-            exam: e,
-            studentsAffected:
-              clashingWith.get(normalizeCourseCode(e.courseCode)) ?? 0,
-          })),
+          clashExams: sameDayItems,
         });
         continue;
       }
 
       // priority 3 (orange): adjacent day
-      const adjacentClashExams = [...clashingWith.keys()]
+      const adjacentItems = [...clashingWith.keys()]
         .filter((c) => adjacentByCode.has(c))
-        .flatMap((c) => adjacentByCode.get(c)!);
+        .map((c) => ({
+          exam: adjacentByCode.get(c)![0],
+          studentsAffected: clashingWith.get(c) ?? 0,
+        }));
 
-      if (adjacentClashExams.length > 0) {
+      if (adjacentItems.length > 0) {
         colorMap.set(exam.id, "orange");
         clashExamsMap.set(exam.id, {
           clash: "adjacent",
-          clashExams: adjacentClashExams.map((e) => ({
-            exam: e,
-            studentsAffected:
-              clashingWith.get(normalizeCourseCode(e.courseCode)) ?? 0,
-          })),
+          clashExams: adjacentItems,
         });
       }
     }
