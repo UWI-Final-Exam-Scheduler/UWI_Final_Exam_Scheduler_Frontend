@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { vi } from "vitest";
+import { expect, afterEach, vi, beforeAll, afterAll } from "vitest";
 if (!window.matchMedia) {
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -25,3 +25,20 @@ class TestResizeObserver {
 globalThis.ResizeObserver =
   TestResizeObserver as unknown as typeof ResizeObserver;
 HTMLElement.prototype.scrollIntoView = vi.fn();
+
+const originalWarn = console.warn;
+beforeAll(() => {
+  console.warn = (...args: unknown[]) => {
+    if (
+      typeof args[0] === "string" &&
+      args[0].includes("Missing `Description`")
+    ) {
+      return;
+    }
+    originalWarn(...args);
+  };
+});
+
+afterAll(() => {
+  console.warn = originalWarn;
+});
