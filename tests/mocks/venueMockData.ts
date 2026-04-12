@@ -2,7 +2,7 @@ import { Venue } from "@/app/components/types/calendarTypes";
 
 export const mockVenue = (overrides?: Partial<Venue>): Venue => ({
   id: 1,
-  name: "Engineering Building A101",
+  name: "MD2",
   capacity: 100,
   ...overrides,
 });
