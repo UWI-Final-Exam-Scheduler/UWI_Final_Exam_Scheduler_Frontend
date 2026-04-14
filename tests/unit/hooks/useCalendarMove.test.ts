@@ -321,6 +321,48 @@ describe("useCalendarMove", () => {
       expect(mockStore.restoreSnapshot).toHaveBeenCalled();
       expect(toast.error).toHaveBeenCalled();
     });
+
+    it("shows success toast on a successful move", async () => {
+      const { handleMoveFromReschedule } = useCalendarMove(
+        [mockVenue],
+        mockFetchRescheduleExams,
+        mockFetchDaysWithExams,
+      );
+
+      const move = makePendingMove({
+        toColumnId: "1",
+        toVenueId: 1,
+        to: "calendar",
+      });
+
+      await handleMoveFromReschedule(move, new Date("2024-03-15"));
+
+      expect(toast.success).toHaveBeenCalledWith("Exam moved to calendar");
+    });
+
+    it("logs the move action on success", async () => {
+      const { handleMoveFromReschedule } = useCalendarMove(
+        [mockVenue],
+        mockFetchRescheduleExams,
+        mockFetchDaysWithExams,
+      );
+
+      const move = makePendingMove({
+        toColumnId: "1",
+        toVenueId: 1,
+        to: "calendar",
+      });
+
+      await handleMoveFromReschedule(move, new Date("2024-03-15"));
+
+      expect(addLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "Move Exam from Reschedule",
+          entityId: "COMP3603",
+          oldValue: "To Be Rescheduled",
+        }),
+      );
+    });
   });
 
   // ── handleSameDayTimeChange ────────────────────────────────────────────
@@ -420,6 +462,25 @@ describe("useCalendarMove", () => {
           entityId: "COMP3603",
         }),
       );
+    });
+
+    it("shows success toast on a successful same-day move", async () => {
+      const { handleSameDayTimeChange } = useCalendarMove(
+        [mockVenue],
+        mockFetchRescheduleExams,
+        mockFetchDaysWithExams,
+      );
+
+      const move = makePendingMove({
+        toColumnId: "1",
+        toVenueId: 1,
+        from: "calendar",
+        to: "calendar",
+      });
+
+      await handleSameDayTimeChange(move);
+
+      expect(toast.success).toHaveBeenCalledWith("Exam moved successfully");
     });
   });
 });

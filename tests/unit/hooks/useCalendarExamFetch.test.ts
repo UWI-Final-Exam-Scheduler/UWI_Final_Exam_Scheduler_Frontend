@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useCalendarExamFetch } from "@/app/hooks/useCalendarExamFetch";
 import type { Exam, Venue } from "@/app/components/types/calendarTypes";
@@ -47,6 +47,7 @@ import { venueFetch } from "@/app/lib/venueFetch";
 
 describe("useCalendarExamFetch", () => {
   const mockVenue: Venue = { id: 1, name: "Main Hall", capacity: 100 };
+  const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,6 +55,10 @@ describe("useCalendarExamFetch", () => {
     vi.mocked(fetchExamstobeRescheduled).mockResolvedValue([]);
     vi.mocked(examFetchbyDate).mockResolvedValue([]);
     vi.mocked(venueFetch).mockResolvedValue([mockVenue]);
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockClear();
   });
 
   it("loads venues and reschedule data on mount", async () => {
@@ -112,5 +117,15 @@ describe("useCalendarExamFetch", () => {
 
     expect(examFetchbyDate).not.toHaveBeenCalledWith("2025-05-10");
     expect(mockSetExams).toHaveBeenCalledWith([]);
+  });
+
+  it("sets isInitialLoading to false even when the initial fetch fails", async () => {
+    vi.mocked(get_days_with_exams).mockRejectedValue(new Error("Server error"));
+
+    const { result } = renderHook(() => useCalendarExamFetch(undefined));
+
+    await waitFor(() => {
+      expect(result.current.isInitialLoading).toBe(false);
+    });
   });
 });
