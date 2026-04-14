@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useExamSplitMerge } from "@/app/hooks/useExamSplitMerge";
 import { mockExam } from "../mocks/examMockData";
@@ -25,6 +25,7 @@ import { mergeExam, rescheduleExam, splitExam } from "@/app/lib/examFetch";
 describe("useExamSplitMerge & toast notifications", () => {
   const exam1 = mockExam({ id: 1, courseCode: "COMP1601", timeColumnId: "9" });
   const exam2 = mockExam({ id: 2, courseCode: "COMP1601", timeColumnId: "9" });
+  const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
   let exams: Exam[];
   let rescheduledExams: Exam[];
@@ -42,6 +43,10 @@ describe("useExamSplitMerge & toast notifications", () => {
       React.SetStateAction<Exam[]>
     >;
     refetch = vi.fn(async () => {}) as unknown as () => Promise<void>;
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockClear();
   });
 
   it("should open split dialog when onSplit is called", () => {

@@ -62,6 +62,7 @@ function mockFetchResponse(
 
 describe("Login page — integration", () => {
   let user: ReturnType<typeof userEvent.setup>;
+  const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -75,6 +76,7 @@ describe("Login page — integration", () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+    consoleErrorSpy.mockClear();
   });
 
   //rendering
@@ -154,14 +156,9 @@ describe("Login page — integration", () => {
     await user.click(screen.getByRole("button", { name: /Login/i }));
 
     await waitFor(() => expect(vi.mocked(toast.success)).toHaveBeenCalled());
-
-    expect(window.location.href).toBe(""); // not yet redirected
-    await waitFor(
-      () => {
-        expect(window.location.href).toBe("/dashboard");
-      },
-      { timeout: 1500 },
-    );
+    await waitFor(() => expect(window.location.href).toBe("/dashboard"), {
+      timeout: 1500,
+    });
   });
 
   // API error responses

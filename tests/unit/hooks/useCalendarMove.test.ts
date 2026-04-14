@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type {
   Exam,
   PendingMove,
@@ -71,6 +71,7 @@ describe("useCalendarMove", () => {
 
   const mockFetchRescheduleExams = vi.fn();
   const mockFetchDaysWithExams = vi.fn();
+  const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -84,6 +85,10 @@ describe("useCalendarMove", () => {
     mockFetchDaysWithExams.mockResolvedValue(undefined);
     vi.mocked(examFetch.rescheduleExam).mockResolvedValue(makeExam());
     vi.mocked(examFetch.examFetchbyDate).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockClear();
   });
 
   // ── getMoveExamId ──────────────────────────────────────────────────────

@@ -97,14 +97,6 @@ export function useCalendarExamFetch(date: Date | undefined) {
 
         setIsRescheduleLoading(true);
         const rescheduleData = await fetchExamstobeRescheduled();
-
-        console.log(
-          "reschedule from DB:",
-          rescheduleData.map((e: Exam) => ({
-            id: e.id,
-            courseCode: e.courseCode,
-          })),
-        );
         setRescheduleExams(rescheduleData);
 
         const allScheduled = await fetchScheduledExamsSafely(days);

@@ -106,13 +106,6 @@ describe("useCourses", () => {
     });
   });
 
-  it("sets isLoading to true during fetch", () => {
-    renderHook(() => useCourses());
-
-    // Initially true
-    // (depends on how quickly the mock resolves)
-  });
-
   it("sets isLoading to false after fetch", async () => {
     const { result } = renderHook(() => useCourses());
 

@@ -46,7 +46,16 @@ export const mockClashDetail = (
   clash: "same-day-time" | "sameday" | "adjacent" = "same-day-time",
 ): ClashDetail => ({
   clash,
-  clashExams: [mockClashExam(12), mockClashExam(8)],
+  clashExams: [
+    {
+      exam: { ...mockExamWithClash(), id: 2 },
+      studentsAffected: 12,
+    },
+    {
+      exam: { ...mockExam(), id: 3, courseCode: "INFO3606" },
+      studentsAffected: 8,
+    },
+  ],
 });
 
 export const mockExams = (): Exam[] => [
