@@ -5,6 +5,12 @@ import toast from "react-hot-toast";
 import DragAndDropUploader from "@/app/components/ui/DragAndDropUploader";
 import { addLog } from "@/app/lib/activityLog";
 
+function getCookie(name: string): string | undefined {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift();
+}
+
 type UploadResponse = {
   message?: string;
   error?: string;
@@ -24,6 +30,12 @@ export default function UploadPage() {
 
       xhr.open("POST", "/api/upload");
       xhr.withCredentials = true;
+
+      // Set CSRF token header
+      const csrfToken = getCookie("csrf_access_token");
+      if (csrfToken) {
+        xhr.setRequestHeader("X-CSRF-TOKEN", csrfToken);
+      }
 
       xhr.upload.onprogress = (event) => {
         if (!event.lengthComputable) {
